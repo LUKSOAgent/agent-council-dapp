@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Council DAO</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      --pink: #FF2975;
+      --dark: #1A0533;
+      --light: #F0E6FF;
+      --mid: #3D1066;
+      --text: #e8d5ff;
+      --muted: #9b7cc4;
+      --success: #00e676;
+      --warning: #ffab40;
+      --danger: #ff5252;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--mid);
+    }
+    header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--pink), var(--light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header span { font-size: 13px; color: var(--muted); }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--pink); color: #fff; }
+    .btn-secondary { background: var(--mid); color: var(--light); }
+    .btn-success { background: #00c853; color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .card {
+      background: var(--mid);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .card h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+    .card .value { font-size: 28px; font-weight: 700; color: var(--light); }
+    .card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    section { margin-bottom: 40px; }
+    section h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--light);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    section h2::before { content: ''; display: block; width: 4px; height: 18px; background: var(--pink); border-radius: 2px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; border-bottom: 1px solid var(--mid); }
+    td { padding: 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-active { background: rgba(0,230,118,0.15); color: var(--success); }
+    .badge-pending { background: rgba(255,171,64,0.15); color: var(--warning); }
+    .badge-succeeded { background: rgba(0,230,118,0.15); color: var(--success); }
+    .badge-defeated { background: rgba(255,82,82,0.15); color: var(--danger); }
+    .badge-queued { background: rgba(120,86,255,0.15); color: #9b7cff; }
+    .badge-executed { background: rgba(255,255,255,0.1); color: var(--muted); }
+    .badge-canceled { background: rgba(255,82,82,0.1); color: var(--danger); }
+    .badge-expired { background: rgba(255,255,255,0.1); color: var(--muted); }
+
+    form { background: var(--mid); border-radius: 12px; padding: 24px; max-width: 640px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
+    label:first-child { margin-top: 0; }
+    input, textarea {
+      width: 100%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus, textarea:focus { border-color: var(--pink); }
+    textarea { min-height: 80px; resize: vertical; }
+    .form-actions { margin-top: 20px; display: flex; gap: 10px; }
+
+    .proposal-card {
+      background: var(--mid);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .proposal-card .prop-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+    .proposal-card .prop-id { font-size: 11px; color: var(--muted); font-family: monospace; word-break: break-all; }
+    .prop-desc { font-size: 15px; font-weight: 600; color: var(--light); margin-bottom: 12px; }
+    .vote-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+    .vote-bar .for { background: rgba(0,200,83,0.3); color: #69f0ae; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
+    .vote-bar .against { background: rgba(255,82,82,0.3); color: #ff8a80; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
+    .vote-bar .abstain { background: rgba(255,255,255,0.1); color: var(--muted); padding: 4px 12px; border-radius: 6px; font-size: 13px; }
+    .prop-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    #connectBtn { background: linear-gradient(135deg, var(--pink), #7b1fa2); color: #fff; }
+    .addr { font-family: monospace; font-size: 12px; color: var(--muted); }
+    .loading { color: var(--muted); font-size: 14px; font-style: italic; }
+    .error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--mid);
+      color: var(--light);
+      padding: 14px 20px;
+      border-radius: 10px;
+      border-left: 4px solid var(--pink);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      font-size: 14px;
+      max-width: 380px;
+      z-index: 1000;
+      transition: opacity 0.3s;
+    }
+    .agent-row td:first-child { font-weight: 600; color: var(--light); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>⚖️ Agent Council DAO</h1>
+    <div>
+      <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+      <span id="walletAddr" style="margin-left:12px;"></span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="grid" id="statsGrid">
+    <div class="card"><h3>Total Supply</h3><div class="value" id="totalSupply">—</div><div class="sub">COUNCIL tokens</div></div>
+    <div class="card"><h3>Quorum</h3><div class="value" id="quorum">—</div><div class="sub">% of supply required</div></div>
+    <div class="card"><h3>Voting Delay</h3><div class="value" id="votingDelay">—</div><div class="sub">blocks after propose</div></div>
+    <div class="card"><h3>Voting Period</h3><div class="value" id="votingPeriod">—</div><div class="sub">blocks active</div></div>
+  </div>
+
+  <!-- Token Holders -->
+  <section>
+    <h2>Council Members</h2>
+    <div class="card">
+      <table>
+        <thead><tr><th>Agent</th><th>Address</th><th>Balance</th><th>Votes</th></tr></thead>
+        <tbody id="holdersTable"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Proposals -->
+  <section>
+    <h2>Proposals</h2>
+    <div id="proposalsList"><p class="loading">Loading proposals...</p></div>
+  </section>
+
+  <!-- Propose -->
+  <section>
+    <h2>Create Proposal</h2>
+    <form onsubmit="submitProposal(event)">
+      <label>Target Address</label>
+      <input id="propTarget" placeholder="0x..." />
+      <label>Calldata (hex)</label>
+      <input id="propCalldata" placeholder="0x (empty for no-op)" value="0x" />
+      <label>Description</label>
+      <textarea id="propDesc" placeholder="Describe your proposal..."></textarea>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Submit Proposal</button>
+      </div>
+      <div id="propError" class="error"></div>
+    </form>
+  </section>
+
+  <div id="toast" class="toast" style="display:none;"></div>
+
+  <script>
+    const RPC = 'https://rpc.testnet.lukso.network';
+    const CHAIN_ID = 4201;
+    const GOVERNOR = '0x88e84158fd976c18f800b9e32f38cff52f69cbd6';
+    const TOKEN = '0xa29c9b8bc5437945330e56ebab83fbbe9f2436a6';
+    const TIMELOCK = '0x0bfb7133b87c655261613633f77fd7d0cd8b9ddc';
+    const AGENTS = [
+      { name: 'LUKSOAgent', addr: '0x293E96ebbf264ed7715cff2b67850517De70232a' },
+      { name: 'Emmet',      addr: '0x1089E1c613Db8Cb91db72be4818632153E62557a' },
+      { name: 'Leo',        addr: '0x1e0267B7e88B97d5037e410bdC61D105e04ca02A' },
+      { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450' },
+    ];
+
+    const GOV_ABI = [
+      'function propose(address[],uint256[],bytes[],string) returns (uint256)',
+      'function castVote(uint256,uint8) returns (uint256)',
+      'function queue(address[],uint256[],bytes[],bytes32) returns (uint256)',
+      'function execute(address[],uint256[],bytes[],bytes32) payable returns (uint256)',
+      'function cancel(address[],uint256[],bytes[],bytes32) returns (uint256)',
+      'function state(uint256) view returns (uint8)',
+      'function proposalVotes(uint256) view returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)',
+      'function votingDelay() view returns (uint256)',
+      'function votingPeriod() view returns (uint256)',
+      'function quorumNumerator() view returns (uint256)',
+      'function proposalSnapshot(uint256) view returns (uint256)',
+      'function proposalDeadline(uint256) view returns (uint256)',
+      'event ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 voteStart, uint256 voteEnd, string description)',
+    ];
+    const TOKEN_ABI = [
+      'function balanceOf(address) view returns (uint256)',
+      'function totalSupply() view returns (uint256)',
+      'function delegates(address) view returns (address)',
+      'function getVotes(address) view returns (uint256)',
+    ];
+
+    let provider, signer, govContract, tokenContract, signerAddr;
+
+    async function init() {
+      provider = new ethers.JsonRpcProvider(RPC);
+      govContract = new ethers.Contract(GOVERNOR, GOV_ABI, provider);
+      tokenContract = new ethers.Contract(TOKEN, TOKEN_ABI, provider);
+      await loadStats();
+      await loadHolders();
+      await loadProposals();
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) { showToast('MetaMask not found'); return; }
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const p = new ethers.BrowserProvider(window.ethereum);
+        const network = await p.getNetwork();
+        if (Number(network.chainId) !== CHAIN_ID) {
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0x106B' }],
+            });
+          } catch(e) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{ chainId: '0x106B', chainName: 'LUKSO Testnet', rpcUrls: [RPC], nativeCurrency: { name: 'LYXt', symbol: 'LYXt', decimals: 18 } }]
+            });
+          }
+        }
+        signer = await p.getSigner();
+        signerAddr = await signer.getAddress();
+        govContract = new ethers.Contract(GOVERNOR, GOV_ABI, signer);
+        tokenContract = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
+        document.getElementById('walletAddr').textContent = signerAddr.slice(0,6)+'...'+signerAddr.slice(-4);
+        document.getElementById('connectBtn').textContent = 'Connected';
+        showToast('Connected: ' + signerAddr.slice(0,10)+'...');
+        await loadProposals();
+      } catch(e) { showToast('Connect failed: ' + e.message); }
+    }
+
+    async function loadStats() {
+      try {
+        const [supply, quorum, delay, period] = await Promise.all([
+          tokenContract.totalSupply(),
+          govContract.quorumNumerator(),
+          govContract.votingDelay(),
+          govContract.votingPeriod(),
+        ]);
+        document.getElementById('totalSupply').textContent = Number(ethers.formatUnits(supply,18)).toLocaleString();
+        document.getElementById('quorum').textContent = quorum.toString() + '%';
+        document.getElementById('votingDelay').textContent = delay.toString();
+        document.getElementById('votingPeriod').textContent = period.toString();
+      } catch(e) { console.error('Stats error', e); }
+    }
+
+    async function loadHolders() {
+      const tbody = document.getElementById('holdersTable');
+      try {
+        const rows = await Promise.all(AGENTS.map(async a => {
+          const [bal, votes] = await Promise.all([
+            tokenContract.balanceOf(a.addr),
+            tokenContract.getVotes(a.addr),
+          ]);
+          return `<tr class="agent-row">
+            <td>${a.name}</td>
+            <td class="addr">${a.addr.slice(0,10)}...${a.addr.slice(-6)}</td>
+            <td>${Number(ethers.formatUnits(bal,18)).toLocaleString()}</td>
+            <td>${Number(ethers.formatUnits(votes,18)).toLocaleString()}</td>
+          </tr>`;
+        }));
+        tbody.innerHTML = rows.join('');
+      } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="error">Failed to load: ${e.message}</td></tr>`; }
+    }
+
+    const STATE_LABELS = ['Pending','Active','Canceled','Defeated','Succeeded','Queued','Expired','Executed'];
+    const STATE_BADGES = ['badge-pending','badge-active','badge-canceled','badge-defeated','badge-succeeded','badge-queued','badge-expired','badge-executed'];
+
+    async function loadProposals() {
+      const div = document.getElementById('proposalsList');
+      try {
+        const filter = govContract.filters.ProposalCreated();
+        const events = await govContract.queryFilter(filter, 0, 'latest');
+        if (!events.length) { div.innerHTML = '<p class="loading">No proposals yet.</p>'; return; }
+        const cards = await Promise.all(events.map(async e => {
+          const propId = e.args.proposalId;
+          const desc = e.args.description;
+          const targets = e.args.targets;
+          const calldatas = e.args.calldatas;
+          const [stateNum, votes] = await Promise.all([
+            govContract.state(propId),
+            govContract.proposalVotes(propId),
+          ]);
+          const st = Number(stateNum);
+          const label = STATE_LABELS[st] || 'Unknown';
+          const badge = STATE_BADGES[st] || '';
+          const forV = Number(ethers.formatUnits(votes.forVotes,18)).toLocaleString();
+          const againstV = Number(ethers.formatUnits(votes.againstVotes,18)).toLocaleString();
+          const abstainV = Number(ethers.formatUnits(votes.abstainVotes,18)).toLocaleString();
+
+          const propIdStr = propId.toString();
+          const targetsJson = JSON.stringify(targets);
+          const calldatasJson = JSON.stringify(calldatas);
+          const descEsc = desc.replace(/'/g,"&#39;");
+
+          let actions = '';
+          if (st === 1) { // Active
+            actions += `<button class="btn-primary btn-sm" onclick="vote('${propIdStr}',1)">✅ For</button>`;
+            actions += `<button class="btn-danger btn-sm" onclick="vote('${propIdStr}',0)">❌ Against</button>`;
+            actions += `<button class="btn-secondary btn-sm" onclick="vote('${propIdStr}',2)">🤷 Abstain</button>`;
+            actions += `<button class="btn-secondary btn-sm" onclick="cancelProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">🚫 Cancel</button>`;
+          }
+          if (st === 4) { // Succeeded
+            actions += `<button class="btn-success btn-sm" onclick="queueProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">📋 Queue</button>`;
+          }
+          if (st === 5) { // Queued
+            actions += `<button class="btn-success btn-sm" onclick="executeProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">🚀 Execute</button>`;
+          }
+
+          return `<div class="proposal-card">
+            <div class="prop-header">
+              <span class="badge ${badge}">${label}</span>
+            </div>
+            <div class="prop-desc">${desc.slice(0,120)}${desc.length>120?'...':''}</div>
+            <div class="prop-id">ID: ${propIdStr.slice(0,30)}...</div>
+            <div class="vote-bar" style="margin-top:12px;">
+              <span class="for">✅ For: ${forV}</span>
+              <span class="against">❌ Against: ${againstV}</span>
+              <span class="abstain">🤷 Abstain: ${abstainV}</span>
+            </div>
+            <div class="prop-actions">${actions}</div>
+          </div>`;
+        }));
+        div.innerHTML = cards.reverse().join('');
+      } catch(e) { div.innerHTML = `<p class="error">Failed to load proposals: ${e.message}</p>`; }
+    }
+
+    async function submitProposal(e) {
+      e.preventDefault();
+      if (!signer) { showToast('Connect wallet first'); return; }
+      const target = document.getElementById('propTarget').value.trim();
+      const calldata = document.getElementById('propCalldata').value.trim() || '0x';
+      const desc = document.getElementById('propDesc').value.trim();
+      document.getElementById('propError').textContent = '';
+      if (!ethers.isAddress(target)) { document.getElementById('propError').textContent = 'Invalid target address'; return; }
+      if (!desc) { document.getElementById('propError').textContent = 'Description required'; return; }
+      try {
+        showToast('Submitting proposal...');
+        const tx = await govContract.propose([target],[0n],[calldata],desc);
+        showToast('TX sent: ' + tx.hash.slice(0,16)+'...');
+        await tx.wait();
+        showToast('Proposal created! ✅');
+        document.getElementById('propTarget').value = '';
+        document.getElementById('propCalldata').value = '0x';
+        document.getElementById('propDesc').value = '';
+        await loadProposals();
+      } catch(e) { document.getElementById('propError').textContent = e.reason || e.message; }
+    }
+
+    async function vote(propId, support) {
+      if (!signer) { showToast('Connect wallet first'); return; }
+      try {
+        showToast('Casting vote...');
+        const tx = await govContract.castVote(BigInt(propId), support);
+        showToast('TX sent: ' + tx.hash.slice(0,16)+'...');
+        await tx.wait();
+        showToast('Vote cast! ✅');
+        await loadProposals();
+      } catch(e) { showToast('Vote failed: ' + (e.reason || e.message)); }
+    }
+
+    function descHash(desc) {
+      return ethers.id(desc);
+    }
+
+    async function queueProp(propId, targetsJson, calldatasJson, desc) {
+      if (!signer) { showToast('Connect wallet first'); return; }
+      try {
+        const targets = JSON.parse(targetsJson);
+        const calldatas = JSON.parse(calldatasJson);
+        const values = targets.map(() => 0n);
+        showToast('Queueing proposal...');
+        const tx = await govContract.queue(targets, values, calldatas, descHash(desc));
+        await tx.wait();
+        showToast('Proposal queued! ✅');
+        await loadProposals();
+      } catch(e) { showToast('Queue failed: ' + (e.reason || e.message)); }
+    }
+
+    async function executeProp(propId, targetsJson, calldatasJson, desc) {
+      if (!signer) { showToast('Connect wallet first'); return; }
+      try {
+        const targets = JSON.parse(targetsJson);
+        const calldatas = JSON.parse(calldatasJson);
+        const values = targets.map(() => 0n);
+        showToast('Executing proposal...');
+        const tx = await govContract.execute(targets, values, calldatas, descHash(desc));
+        await tx.wait();
+        showToast('Proposal executed! 🚀');
+        await loadProposals();
+      } catch(e) { showToast('Execute failed: ' + (e.reason || e.message)); }
+    }
+
+    async function cancelProp(propId, targetsJson, calldatasJson, desc) {
+      if (!signer) { showToast('Connect wallet first'); return; }
+      try {
+        const targets = JSON.parse(targetsJson);
+        const calldatas = JSON.parse(calldatasJson);
+        const values = targets.map(() => 0n);
+        showToast('Canceling proposal...');
+        const tx = await govContract.cancel(targets, values, calldatas, descHash(desc));
+        await tx.wait();
+        showToast('Proposal canceled');
+        await loadProposals();
+      } catch(e) { showToast('Cancel failed: ' + (e.reason || e.message)); }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.opacity = '1';
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 4000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
