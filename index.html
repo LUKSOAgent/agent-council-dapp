@@ -527,7 +527,7 @@
 
     .proposal-card.active-proposal {
       border-color: rgba(48, 209, 88, 0.3);
-      box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.1), 0 4px 24px rgba(0,0,0,0.2);
+      animation: active-glow 3s ease-in-out infinite;
     }
 
     .prop-header {
@@ -576,10 +576,24 @@
       background: currentColor;
     }
 
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.5); }
+    }
+
+    @keyframes active-glow {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.1), 0 4px 24px rgba(0,0,0,0.2); }
+      50% { box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.3), 0 4px 32px rgba(48, 209, 88, 0.15); }
+    }
+
     .badge-active {
       background: rgba(48, 209, 88, 0.15);
       color: var(--success);
       border: 1px solid rgba(48, 209, 88, 0.3);
+    }
+
+    .badge-active .badge-dot {
+      animation: pulse-dot 1.8s ease-in-out infinite;
     }
 
     .badge-pending {
@@ -1138,6 +1152,7 @@
           <div class="wallet-pill">
             <div class="wallet-dot"></div>
             <span id="walletAddr"></span>
+            <span id="walletVotePowerPill" style="display:none;font-size:11px;color:var(--success);font-weight:700;margin-left:2px;"></span>
           </div>
         </div>
       </div>
@@ -1260,9 +1275,9 @@
         chainIdHex: '0x2A',
         rpc: 'https://rpc.mainnet.lukso.network',
         explorer: 'https://explorer.lukso.network',
-        GOVERNOR: '0xcD6643Cb52FF106CDA23c27f2F85f9004E5aC787',
-        TOKEN:    '0xac0b4771c154359Cb7aA92bBB42B56515F46D1D2',
-        TIMELOCK: '0xE6E5E7d3051Ad64D6408cD84Eb3Ae83b082b6e22',
+        GOVERNOR: '0x2D8e3b16EB822363C698bae096F903E8b7fF4FFe',
+        TOKEN:    '0xB8119aC14A5FD8E474cDA77F9451b9064C596e48',
+        TIMELOCK: '0x872C8c937dD75867FDc7a6F94b5846B058Da8106',
       },
       testnet: {
         name: 'LUKSO Testnet',
@@ -1302,6 +1317,7 @@
       'function hasVoted(uint256,address) view returns (bool)',
       'function quorum(uint256) view returns (uint256)',
       'event ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 voteStart, uint256 voteEnd, string description)',
+      'event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason)',
     ];
 
     const TOKEN_ABI = [
@@ -1396,6 +1412,11 @@
         const balFormatted = Number(ethers.formatUnits(bal, 18)).toLocaleString(undefined, { maximumFractionDigits: 0 });
         document.getElementById('statVotePower').textContent = votesFormatted;
         document.getElementById('statTokenBalance').textContent = `${balFormatted} tokens`;
+        const pillPower = document.getElementById('walletVotePowerPill');
+        if (pillPower) {
+          if (votes > 0n) { pillPower.textContent = votesFormatted + ' votes'; pillPower.style.display = ''; }
+          else { pillPower.style.display = 'none'; }
+        }
       } catch(e) {}
     }
 
@@ -1562,11 +1583,31 @@
       </div>`;
     }
 
+    // ── Update filter counts ──────────────────────────────────────────────────
+    function updateFilterCounts(cards) {
+      const counts = {};
+      cards.forEach(c => { counts[c.state] = (counts[c.state] || 0) + 1; });
+      const total = cards.length;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        const f = btn.dataset.filter;
+        const count = f === 'all' ? total : (counts[parseInt(f)] || 0);
+        // Strip any existing count suffix, then re-add
+        const baseName = btn.textContent.replace(/ \(\d+\)$/, '');
+        btn.textContent = count > 0 ? `${baseName} (${count})` : baseName;
+      });
+    }
+
     // ── Filter proposals ─────────────────────────────────────────────────────
     function filterProposals(filter, btn) {
       activeFilter = filter;
       document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
+      if (btn) {
+        btn.classList.add('active');
+      } else {
+        document.querySelectorAll('.filter-btn').forEach(b => {
+          if (b.dataset.filter === filter) b.classList.add('active');
+        });
+      }
 
       const allCards = document.querySelectorAll('.proposal-card[data-state]');
       let visible = 0;
@@ -1629,10 +1670,17 @@
           ]);
 
           let hasVoted = false;
-          let userVoteSupport = null;
+          let userVoteSupport = null; // 0=Against, 1=For, 2=Abstain
           if (signerAddr) {
             try {
               hasVoted = await govContract.hasVoted(propId, signerAddr);
+              if (hasVoted) {
+                try {
+                  const voteFilter = govContract.filters.VoteCast(signerAddr, propId);
+                  const voteEvents = await govContract.queryFilter(voteFilter, 0, 'latest');
+                  if (voteEvents.length > 0) userVoteSupport = Number(voteEvents[0].args.support);
+                } catch(e2) {}
+              }
             } catch(e) {}
           }
 
@@ -1651,6 +1699,15 @@
           const label = STATE_LABELS[st] || 'Unknown';
           const badgeClass = STATE_BADGE_CLASSES[st] || 'badge-pending';
           const isActive = st === 1;
+
+          const VOTE_LABELS = ['Against', 'For', 'Abstain'];
+          const VOTE_COLORS = ['var(--danger)', 'var(--success)', 'var(--text-secondary)'];
+          const VOTE_ICONS  = ['✗', '✓', '~'];
+          const hasVotedBadge = hasVoted
+            ? (userVoteSupport !== null
+                ? `<span class="badge badge-voted">${VOTE_ICONS[userVoteSupport]} Voted ${VOTE_LABELS[userVoteSupport]}</span>`
+                : `<span class="badge badge-voted">✓ Voted</span>`)
+            : '';
 
           const shortDesc = desc.length > 100 ? desc.slice(0, 100) + '…' : desc;
           const targetStr = targets[0] || '(none)';
@@ -1723,13 +1780,14 @@
               <div class="prop-header">
                 <div class="prop-header-left">
                   <span class="badge ${badgeClass}"><span class="badge-dot"></span>${label}</span>
+                  ${hasVotedBadge}
                 </div>
                 <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
               </div>
               <div class="prop-title" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
               ${deadlineHtml}
               ${voteProgressHTML(votes.forVotes, votes.againstVotes, votes.abstainVotes)}
-              ${(st === 1) ? quorumBarHTML(votes.forVotes) : ''}
+              ${(st === 1 || st === 3 || st === 4 || st === 5 || st === 7) ? quorumBarHTML(votes.forVotes) : ''}
               ${voteHtml}
               ${actionsHtml}
               <div class="prop-details" id="details_${propIdStr}">
@@ -1756,10 +1814,11 @@
 
         div.innerHTML = sorted.map(c => c.html).join('');
 
+        // Update filter button counts
+        updateFilterCounts(cards);
+
         // Re-apply active filter
-        if (activeFilter !== 'all') {
-          filterProposals(activeFilter, null);
-        }
+        filterProposals(activeFilter, null);
 
       } catch(e) {
         div.innerHTML = `<div class="error-text">Failed to load proposals: ${e.message}</div>`;
