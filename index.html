@@ -29,9 +29,11 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 32px;
+      margin-bottom: 16px;
       padding-bottom: 16px;
       border-bottom: 1px solid var(--mid);
+      flex-wrap: wrap;
+      gap: 12px;
     }
     header h1 {
       font-size: 24px;
@@ -40,7 +42,29 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    header span { font-size: 13px; color: var(--muted); }
+    .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .network-switcher {
+      display: flex;
+      background: var(--mid);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .network-btn {
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .network-btn.active { background: var(--pink); color: #fff; }
+    .network-btn:hover:not(.active) { color: var(--light); }
+    #walletInfo { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    #walletAddr { font-size: 12px; color: var(--muted); font-family: monospace; }
+    #votePower { font-size: 12px; color: var(--success); }
     button {
       cursor: pointer;
       border: none;
@@ -57,8 +81,23 @@
     .btn-success { background: #00c853; color: #fff; }
     .btn-danger { background: var(--danger); color: #fff; }
     .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn-xs { padding: 4px 10px; font-size: 12px; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .delegation-banner {
+      background: rgba(255,171,64,0.12);
+      border: 1px solid rgba(255,171,64,0.4);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .delegation-banner span { font-size: 14px; color: var(--warning); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
     .card {
       background: var(--mid);
       border-radius: 12px;
@@ -66,7 +105,7 @@
       border: 1px solid rgba(255,255,255,0.07);
     }
     .card h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-    .card .value { font-size: 28px; font-weight: 700; color: var(--light); }
+    .card .value { font-size: 26px; font-weight: 700; color: var(--light); }
     .card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
     section { margin-bottom: 40px; }
@@ -80,6 +119,8 @@
       gap: 8px;
     }
     section h2::before { content: ''; display: block; width: 4px; height: 18px; background: var(--pink); border-radius: 2px; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .section-header h2 { margin-bottom: 0; }
 
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; border-bottom: 1px solid var(--mid); }
@@ -101,11 +142,13 @@
     .badge-executed { background: rgba(255,255,255,0.1); color: var(--muted); }
     .badge-canceled { background: rgba(255,82,82,0.1); color: var(--danger); }
     .badge-expired { background: rgba(255,255,255,0.1); color: var(--muted); }
+    .badge-voted { background: rgba(0,200,83,0.15); color: #69f0ae; }
+    .badge-clawback { background: rgba(255,171,64,0.1); color: var(--warning); font-size: 11px; padding: 2px 8px; margin-left: 6px; }
 
     form { background: var(--mid); border-radius: 12px; padding: 24px; max-width: 640px; }
     label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
     label:first-child { margin-top: 0; }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       background: rgba(0,0,0,0.3);
       border: 1px solid rgba(255,255,255,0.1);
@@ -127,7 +170,9 @@
       padding: 20px;
       margin-bottom: 16px;
       border: 1px solid rgba(255,255,255,0.06);
+      transition: border-color 0.15s;
     }
+    .proposal-card:hover { border-color: rgba(255,41,117,0.3); }
     .proposal-card .prop-header {
       display: flex;
       align-items: flex-start;
@@ -135,13 +180,36 @@
       margin-bottom: 12px;
       gap: 12px;
     }
-    .proposal-card .prop-id { font-size: 11px; color: var(--muted); font-family: monospace; word-break: break-all; }
-    .prop-desc { font-size: 15px; font-weight: 600; color: var(--light); margin-bottom: 12px; }
-    .vote-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+    .proposal-card .prop-id { font-size: 11px; color: var(--muted); font-family: monospace; cursor: pointer; }
+    .proposal-card .prop-id:hover { color: var(--light); }
+    .prop-desc-short { font-size: 15px; font-weight: 600; color: var(--light); margin-bottom: 4px; cursor: pointer; }
+    .prop-desc-short:hover { color: var(--pink); }
+    .prop-details {
+      display: none;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .prop-details.open { display: block; }
+    .prop-details p { margin-bottom: 6px; word-break: break-all; }
+    .prop-details strong { color: var(--text); }
+    .prop-deadline { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .vote-bar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
     .vote-bar .for { background: rgba(0,200,83,0.3); color: #69f0ae; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
     .vote-bar .against { background: rgba(255,82,82,0.3); color: #ff8a80; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
     .vote-bar .abstain { background: rgba(255,255,255,0.1); color: var(--muted); padding: 4px 12px; border-radius: 6px; font-size: 13px; }
-    .prop-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .quorum-bar-wrap { margin-bottom: 14px; }
+    .quorum-bar-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .quorum-bar-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+    .quorum-bar-fill { height: 100%; background: linear-gradient(90deg, var(--pink), #ff6b6b); border-radius: 3px; transition: width 0.4s; }
+    .quorum-bar-fill.met { background: linear-gradient(90deg, #00c853, #69f0ae); }
+
+    .vote-reason { margin-top: 8px; margin-bottom: 8px; }
+    .vote-reason textarea { min-height: 50px; font-size: 13px; }
+    .prop-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
     #connectBtn { background: linear-gradient(135deg, var(--pink), #7b1fa2); color: #fff; }
     .addr { font-family: monospace; font-size: 12px; color: var(--muted); }
@@ -158,33 +226,53 @@
       border-left: 4px solid var(--pink);
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
       font-size: 14px;
-      max-width: 380px;
+      max-width: 420px;
       z-index: 1000;
       transition: opacity 0.3s;
     }
+    .toast a { color: var(--pink); }
     .agent-row td:first-child { font-weight: 600; color: var(--light); }
+    .blockscout-link { font-size: 11px; color: var(--pink); text-decoration: none; }
+    .blockscout-link:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <header>
     <h1>⚖️ Agent Council DAO</h1>
-    <div>
+    <div class="header-right">
+      <div class="network-switcher">
+        <button class="network-btn active" id="btnMainnet" onclick="switchNetwork('mainnet')">Mainnet</button>
+        <button class="network-btn" id="btnTestnet" onclick="switchNetwork('testnet')">Testnet</button>
+      </div>
       <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
-      <span id="walletAddr" style="margin-left:12px;"></span>
+      <div id="walletInfo" style="display:none;">
+        <span id="walletAddr"></span>
+        <span id="votePower"></span>
+      </div>
     </div>
   </header>
+
+  <!-- Delegation banner (shown when wallet connected but not delegated) -->
+  <div class="delegation-banner" id="delegationBanner" style="display:none;">
+    <span>⚠️ You haven't delegated your votes yet — you can hold tokens but can't vote until you delegate.</span>
+    <button class="btn-primary btn-sm" id="delegateBtn" onclick="delegateToSelf()">Delegate to self</button>
+  </div>
 
   <!-- Stats -->
   <div class="grid" id="statsGrid">
     <div class="card"><h3>Total Supply</h3><div class="value" id="totalSupply">—</div><div class="sub">COUNCIL tokens</div></div>
     <div class="card"><h3>Quorum</h3><div class="value" id="quorum">—</div><div class="sub">% of supply required</div></div>
-    <div class="card"><h3>Voting Delay</h3><div class="value" id="votingDelay">—</div><div class="sub">blocks after propose</div></div>
-    <div class="card"><h3>Voting Period</h3><div class="value" id="votingPeriod">—</div><div class="sub">blocks active</div></div>
+    <div class="card"><h3>Voting Delay</h3><div class="value" id="votingDelay">—</div><div class="sub" id="votingDelaySub"></div></div>
+    <div class="card"><h3>Voting Period</h3><div class="value" id="votingPeriod">—</div><div class="sub" id="votingPeriodSub"></div></div>
+    <div class="card"><h3>Timelock Delay</h3><div class="value" id="timelockDelay">—</div><div class="sub">before execution</div></div>
   </div>
 
   <!-- Token Holders -->
   <section>
-    <h2>Council Members</h2>
+    <div class="section-header">
+      <h2>Council Members</h2>
+      <button class="btn-secondary btn-xs" onclick="loadHolders()">↻ Refresh</button>
+    </div>
     <div class="card">
       <table>
         <thead><tr><th>Agent</th><th>Address</th><th>Balance</th><th>Votes</th></tr></thead>
@@ -195,7 +283,10 @@
 
   <!-- Proposals -->
   <section>
-    <h2>Proposals</h2>
+    <div class="section-header">
+      <h2>Proposals</h2>
+      <button class="btn-secondary btn-xs" onclick="loadProposals()">↻ Refresh</button>
+    </div>
     <div id="proposalsList"><p class="loading">Loading proposals...</p></div>
   </section>
 
@@ -210,7 +301,7 @@
       <label>Description</label>
       <textarea id="propDesc" placeholder="Describe your proposal..."></textarea>
       <div class="form-actions">
-        <button type="submit" class="btn-primary">Submit Proposal</button>
+        <button type="submit" class="btn-primary" id="submitPropBtn">Submit Proposal</button>
       </div>
       <div id="propError" class="error"></div>
     </form>
@@ -219,21 +310,43 @@
   <div id="toast" class="toast" style="display:none;"></div>
 
   <script>
-    const RPC = 'https://rpc.testnet.lukso.network';
-    const CHAIN_ID = 4201;
-    const GOVERNOR = '0x88e84158fd976c18f800b9e32f38cff52f69cbd6';
-    const TOKEN = '0xa29c9b8bc5437945330e56ebab83fbbe9f2436a6';
-    const TIMELOCK = '0x0bfb7133b87c655261613633f77fd7d0cd8b9ddc';
+    // ── Network config ──────────────────────────────────────────────────────
+    const NETWORKS = {
+      mainnet: {
+        name: 'LUKSO Mainnet',
+        chainId: 42,
+        chainIdHex: '0x2A',
+        rpc: 'https://rpc.mainnet.lukso.network',
+        explorer: 'https://explorer.lukso.network',
+        GOVERNOR: '0x5AB05188945B90A9CBA8E95B35ef5748671F4937',
+        TOKEN:    '0x0Bdb2c3F194E1CaA92847daB9E28Ec4a2Ab9234D',
+        TIMELOCK: '0x17F4c738AA6eE7bF45bc312a2b22df7F910c8B41',
+      },
+      testnet: {
+        name: 'LUKSO Testnet',
+        chainId: 4201,
+        chainIdHex: '0x106B',
+        rpc: 'https://rpc.testnet.lukso.network',
+        explorer: 'https://explorer.execution.testnet.lukso.network',
+        GOVERNOR: '0x88e84158fd976c18f800b9e32f38cff52f69cbd6',
+        TOKEN:    '0xa29c9b8bc5437945330e56ebab83fbbe9f2436a6',
+        TIMELOCK: '0x0bfb7133b87c655261613633f77fd7d0cd8b9ddc',
+      },
+    };
+
     const AGENTS = [
       { name: 'LUKSOAgent', addr: '0x293E96ebbf264ed7715cff2b67850517De70232a' },
       { name: 'Emmet',      addr: '0x1089E1c613Db8Cb91db72be4818632153E62557a' },
       { name: 'Leo',        addr: '0x1e0267B7e88B97d5037e410bdC61D105e04ca02A' },
-      { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450' },
+      { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450', note: 'clawback active until Apr 25' },
     ];
+
+    const BLOCKS_PER_SEC = 6; // LUKSO ~6s/block
 
     const GOV_ABI = [
       'function propose(address[],uint256[],bytes[],string) returns (uint256)',
       'function castVote(uint256,uint8) returns (uint256)',
+      'function castVoteWithReason(uint256,uint8,string) returns (uint256)',
       'function queue(address[],uint256[],bytes[],bytes32) returns (uint256)',
       'function execute(address[],uint256[],bytes[],bytes32) payable returns (uint256)',
       'function cancel(address[],uint256[],bytes[],bytes32) returns (uint256)',
@@ -244,6 +357,8 @@
       'function quorumNumerator() view returns (uint256)',
       'function proposalSnapshot(uint256) view returns (uint256)',
       'function proposalDeadline(uint256) view returns (uint256)',
+      'function hasVoted(uint256,address) view returns (bool)',
+      'function quorum(uint256) view returns (uint256)',
       'event ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 voteStart, uint256 voteEnd, string description)',
     ];
     const TOKEN_ABI = [
@@ -251,75 +366,162 @@
       'function totalSupply() view returns (uint256)',
       'function delegates(address) view returns (address)',
       'function getVotes(address) view returns (uint256)',
+      'function delegate(address) returns ()',
+    ];
+    const TIMELOCK_ABI = [
+      'function getMinDelay() view returns (uint256)',
     ];
 
-    let provider, signer, govContract, tokenContract, signerAddr;
+    // ── State ───────────────────────────────────────────────────────────────
+    let currentNetwork = 'mainnet';
+    let provider, signer, govContract, tokenContract, timelockContract, signerAddr;
+    let currentBlock = 0;
+    let totalSupplyRaw = 0n;
+    let quorumNumeratorVal = 0n;
 
-    async function init() {
-      provider = new ethers.JsonRpcProvider(RPC);
-      govContract = new ethers.Contract(GOVERNOR, GOV_ABI, provider);
-      tokenContract = new ethers.Contract(TOKEN, TOKEN_ABI, provider);
-      await loadStats();
-      await loadHolders();
-      await loadProposals();
+    // Proposal data store (avoids onclick injection)
+    const proposalStore = {};
+
+    // ── Network switch ──────────────────────────────────────────────────────
+    function switchNetwork(net) {
+      currentNetwork = net;
+      document.getElementById('btnMainnet').classList.toggle('active', net === 'mainnet');
+      document.getElementById('btnTestnet').classList.toggle('active', net === 'testnet');
+      signer = null; signerAddr = null;
+      document.getElementById('connectBtn').textContent = 'Connect Wallet';
+      document.getElementById('walletInfo').style.display = 'none';
+      document.getElementById('delegationBanner').style.display = 'none';
+      init();
     }
 
+    function net() { return NETWORKS[currentNetwork]; }
+
+    // ── Init ────────────────────────────────────────────────────────────────
+    async function init() {
+      provider = new ethers.JsonRpcProvider(net().rpc);
+      govContract = new ethers.Contract(net().GOVERNOR, GOV_ABI, provider);
+      tokenContract = new ethers.Contract(net().TOKEN, TOKEN_ABI, provider);
+      timelockContract = new ethers.Contract(net().TIMELOCK, TIMELOCK_ABI, provider);
+      try { currentBlock = Number(await provider.getBlockNumber()); } catch(e) {}
+      await Promise.all([loadStats(), loadHolders(), loadProposals()]);
+    }
+
+    // ── Wallet ──────────────────────────────────────────────────────────────
     async function connectWallet() {
       if (!window.ethereum) { showToast('MetaMask not found'); return; }
       try {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         const p = new ethers.BrowserProvider(window.ethereum);
         const network = await p.getNetwork();
-        if (Number(network.chainId) !== CHAIN_ID) {
+        if (Number(network.chainId) !== net().chainId) {
           try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: '0x106B' }],
-            });
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: net().chainIdHex }] });
           } catch(e) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{ chainId: '0x106B', chainName: 'LUKSO Testnet', rpcUrls: [RPC], nativeCurrency: { name: 'LYXt', symbol: 'LYXt', decimals: 18 } }]
-            });
+            await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{
+              chainId: net().chainIdHex, chainName: net().name,
+              rpcUrls: [net().rpc], nativeCurrency: { name: 'LYX', symbol: 'LYX', decimals: 18 }
+            }]});
           }
         }
         signer = await p.getSigner();
         signerAddr = await signer.getAddress();
-        govContract = new ethers.Contract(GOVERNOR, GOV_ABI, signer);
-        tokenContract = new ethers.Contract(TOKEN, TOKEN_ABI, signer);
-        document.getElementById('walletAddr').textContent = signerAddr.slice(0,6)+'...'+signerAddr.slice(-4);
+        govContract = new ethers.Contract(net().GOVERNOR, GOV_ABI, signer);
+        tokenContract = new ethers.Contract(net().TOKEN, TOKEN_ABI, signer);
         document.getElementById('connectBtn').textContent = 'Connected';
-        showToast('Connected: ' + signerAddr.slice(0,10)+'...');
+        document.getElementById('walletAddr').textContent = signerAddr.slice(0,6)+'...'+signerAddr.slice(-4);
+        document.getElementById('walletInfo').style.display = 'flex';
+        await updateVotePower();
+        await checkDelegation();
         await loadProposals();
       } catch(e) { showToast('Connect failed: ' + e.message); }
     }
 
+    async function updateVotePower() {
+      if (!signerAddr) return;
+      try {
+        const votes = await tokenContract.getVotes(signerAddr);
+        const formatted = Number(ethers.formatUnits(votes, 18)).toLocaleString();
+        document.getElementById('votePower').textContent = `${formatted} votes`;
+      } catch(e) {}
+    }
+
+    async function checkDelegation() {
+      if (!signerAddr) return;
+      try {
+        const bal = await tokenContract.balanceOf(signerAddr);
+        if (bal === 0n) { document.getElementById('delegationBanner').style.display = 'none'; return; }
+        const delegatee = await tokenContract.delegates(signerAddr);
+        const notDelegated = delegatee === '0x0000000000000000000000000000000000000000' || delegatee.toLowerCase() !== signerAddr.toLowerCase();
+        document.getElementById('delegationBanner').style.display = notDelegated ? 'flex' : 'none';
+      } catch(e) {}
+    }
+
+    async function delegateToSelf() {
+      if (!signer) { showToast('Connect wallet first'); return; }
+      const btn = document.getElementById('delegateBtn');
+      btn.disabled = true; btn.textContent = 'Delegating...';
+      try {
+        const tx = await tokenContract.delegate(signerAddr);
+        showToast('TX sent... waiting for confirmation');
+        await tx.wait();
+        showToast('Votes delegated ✅');
+        document.getElementById('delegationBanner').style.display = 'none';
+        await updateVotePower();
+        await loadProposals();
+      } catch(e) {
+        showToast('Delegation failed: ' + (e.reason || e.message));
+      } finally {
+        btn.disabled = false; btn.textContent = 'Delegate to self';
+      }
+    }
+
+    // ── Stats ───────────────────────────────────────────────────────────────
+    function blocksToHuman(blocks) {
+      const secs = Number(blocks) * BLOCKS_PER_SEC;
+      if (secs < 120) return `~${secs}s`;
+      if (secs < 7200) return `~${Math.round(secs/60)}min`;
+      if (secs < 172800) return `~${Math.round(secs/3600)}h`;
+      return `~${Math.round(secs/86400)} days`;
+    }
+
     async function loadStats() {
       try {
-        const [supply, quorum, delay, period] = await Promise.all([
+        const [supply, quorum, delay, period, timelockDelay] = await Promise.all([
           tokenContract.totalSupply(),
           govContract.quorumNumerator(),
           govContract.votingDelay(),
           govContract.votingPeriod(),
+          timelockContract.getMinDelay(),
         ]);
+        totalSupplyRaw = supply;
+        quorumNumeratorVal = quorum;
         document.getElementById('totalSupply').textContent = Number(ethers.formatUnits(supply,18)).toLocaleString();
         document.getElementById('quorum').textContent = quorum.toString() + '%';
-        document.getElementById('votingDelay').textContent = delay.toString();
-        document.getElementById('votingPeriod').textContent = period.toString();
+        document.getElementById('votingDelay').textContent = Number(delay).toLocaleString();
+        document.getElementById('votingDelaySub').textContent = `blocks (${blocksToHuman(delay)})`;
+        document.getElementById('votingPeriod').textContent = Number(period).toLocaleString();
+        document.getElementById('votingPeriodSub').textContent = `blocks (${blocksToHuman(period)})`;
+        const delaySecs = Number(timelockDelay);
+        const delayH = Math.round(delaySecs / 3600);
+        document.getElementById('timelockDelay').textContent = delayH >= 24 ? `${Math.round(delayH/24)}d` : `${delayH}h`;
       } catch(e) { console.error('Stats error', e); }
     }
 
+    // ── Holders ─────────────────────────────────────────────────────────────
     async function loadHolders() {
       const tbody = document.getElementById('holdersTable');
+      tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
       try {
         const rows = await Promise.all(AGENTS.map(async a => {
           const [bal, votes] = await Promise.all([
             tokenContract.balanceOf(a.addr),
             tokenContract.getVotes(a.addr),
           ]);
+          const noteHtml = a.note ? `<span class="badge badge-clawback">${a.note}</span>` : '';
+          const explorerLink = `${net().explorer}/address/${a.addr}`;
           return `<tr class="agent-row">
-            <td>${a.name}</td>
-            <td class="addr">${a.addr.slice(0,10)}...${a.addr.slice(-6)}</td>
+            <td>${a.name}${noteHtml}</td>
+            <td class="addr"><a href="${explorerLink}" target="_blank" class="blockscout-link">${a.addr.slice(0,10)}...${a.addr.slice(-6)}</a></td>
             <td>${Number(ethers.formatUnits(bal,18)).toLocaleString()}</td>
             <td>${Number(ethers.formatUnits(votes,18)).toLocaleString()}</td>
           </tr>`;
@@ -328,24 +530,70 @@
       } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="error">Failed to load: ${e.message}</td></tr>`; }
     }
 
+    // ── Proposal helpers ────────────────────────────────────────────────────
     const STATE_LABELS = ['Pending','Active','Canceled','Defeated','Succeeded','Queued','Expired','Executed'];
     const STATE_BADGES = ['badge-pending','badge-active','badge-canceled','badge-defeated','badge-succeeded','badge-queued','badge-expired','badge-executed'];
 
+    function deadlineText(deadlineBlock) {
+      const blocksLeft = Number(deadlineBlock) - currentBlock;
+      if (blocksLeft <= 0) return 'Voting ended';
+      const secsLeft = blocksLeft * BLOCKS_PER_SEC;
+      if (secsLeft < 120) return `Closes in ~${secsLeft}s (block ${deadlineBlock})`;
+      if (secsLeft < 7200) return `Closes in ~${Math.round(secsLeft/60)} min (block ${deadlineBlock})`;
+      if (secsLeft < 172800) return `Closes in ~${Math.round(secsLeft/3600)}h (block ${deadlineBlock})`;
+      return `Closes in ~${Math.round(secsLeft/86400)} days (block ${deadlineBlock})`;
+    }
+
+    function quorumBar(forVotes) {
+      if (totalSupplyRaw === 0n) return '';
+      const quorumRequired = totalSupplyRaw * quorumNumeratorVal / 100n;
+      const forNum = Number(ethers.formatUnits(forVotes, 18));
+      const reqNum = Number(ethers.formatUnits(quorumRequired, 18));
+      const pct = reqNum > 0 ? Math.min(100, Math.round(forNum / reqNum * 100)) : 0;
+      const met = forVotes >= quorumRequired;
+      return `<div class="quorum-bar-wrap">
+        <div class="quorum-bar-label">
+          <span>Quorum progress</span>
+          <span>${forNum.toLocaleString(undefined,{maximumFractionDigits:0})} / ${reqNum.toLocaleString(undefined,{maximumFractionDigits:0})} (${pct}%)</span>
+        </div>
+        <div class="quorum-bar-track">
+          <div class="quorum-bar-fill ${met?'met':''}" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+    }
+
+    // ── Load proposals ──────────────────────────────────────────────────────
     async function loadProposals() {
       const div = document.getElementById('proposalsList');
+      div.innerHTML = '<p class="loading">Loading proposals...</p>';
       try {
+        currentBlock = Number(await provider.getBlockNumber());
         const filter = govContract.filters.ProposalCreated();
         const events = await govContract.queryFilter(filter, 0, 'latest');
         if (!events.length) { div.innerHTML = '<p class="loading">No proposals yet.</p>'; return; }
+
         const cards = await Promise.all(events.map(async e => {
           const propId = e.args.proposalId;
+          const propIdStr = propId.toString();
           const desc = e.args.description;
-          const targets = e.args.targets;
-          const calldatas = e.args.calldatas;
-          const [stateNum, votes] = await Promise.all([
+          const targets = Array.from(e.args.targets);
+          const calldatas = Array.from(e.args.calldatas);
+          const values = targets.map(() => 0n);
+
+          const [stateNum, votes, deadline] = await Promise.all([
             govContract.state(propId),
             govContract.proposalVotes(propId),
+            govContract.proposalDeadline(propId),
           ]);
+
+          let hasVoted = false;
+          if (signerAddr) {
+            try { hasVoted = await govContract.hasVoted(propId, signerAddr); } catch(e) {}
+          }
+
+          // Store proposal data for event delegation (avoid onclick injection)
+          proposalStore[propIdStr] = { targets, values, calldatas, desc, propId };
+
           const st = Number(stateNum);
           const label = STATE_LABELS[st] || 'Unknown';
           const badge = STATE_BADGES[st] || '';
@@ -353,43 +601,125 @@
           const againstV = Number(ethers.formatUnits(votes.againstVotes,18)).toLocaleString();
           const abstainV = Number(ethers.formatUnits(votes.abstainVotes,18)).toLocaleString();
 
-          const propIdStr = propId.toString();
-          const targetsJson = JSON.stringify(targets);
-          const calldatasJson = JSON.stringify(calldatas);
-          const descEsc = desc.replace(/'/g,"&#39;");
+          const shortDesc = desc.length > 80 ? desc.slice(0,80)+'…' : desc;
+          const targetStr = targets[0] || '(none)';
+          const calldataStr = calldatas[0] || '0x';
+          const explorerLink = `${net().explorer}/address/${net().GOVERNOR}`;
 
-          let actions = '';
+          let actionsHtml = '';
           if (st === 1) { // Active
-            actions += `<button class="btn-primary btn-sm" onclick="vote('${propIdStr}',1)">✅ For</button>`;
-            actions += `<button class="btn-danger btn-sm" onclick="vote('${propIdStr}',0)">❌ Against</button>`;
-            actions += `<button class="btn-secondary btn-sm" onclick="vote('${propIdStr}',2)">🤷 Abstain</button>`;
-            actions += `<button class="btn-secondary btn-sm" onclick="cancelProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">🚫 Cancel</button>`;
+            if (hasVoted) {
+              actionsHtml += `<span class="badge badge-voted">✅ Voted</span>`;
+            } else {
+              actionsHtml += `
+                <div class="vote-reason">
+                  <textarea id="reason_${propIdStr}" placeholder="Optional: reason for your vote..." rows="2"></textarea>
+                </div>
+                <button class="btn-success btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="1">✅ For</button>
+                <button class="btn-danger btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="0">❌ Against</button>
+                <button class="btn-secondary btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="2">🤷 Abstain</button>`;
+            }
+            actionsHtml += `<button class="btn-secondary btn-sm" data-action="cancel" data-propid="${propIdStr}">🚫 Cancel</button>`;
           }
           if (st === 4) { // Succeeded
-            actions += `<button class="btn-success btn-sm" onclick="queueProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">📋 Queue</button>`;
+            actionsHtml += `<button class="btn-success btn-sm" data-action="queue" data-propid="${propIdStr}">📋 Queue</button>`;
           }
           if (st === 5) { // Queued
-            actions += `<button class="btn-success btn-sm" onclick="executeProp('${propIdStr}','${targetsJson}','${calldatasJson}','${descEsc}')">🚀 Execute</button>`;
+            actionsHtml += `<button class="btn-success btn-sm" data-action="execute" data-propid="${propIdStr}">🚀 Execute</button>`;
           }
+
+          const deadlineHtml = (st === 1 || st === 0) ? `<div class="prop-deadline">⏱ ${deadlineText(deadline)}</div>` : '';
 
           return `<div class="proposal-card">
             <div class="prop-header">
               <span class="badge ${badge}">${label}</span>
+              <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
             </div>
-            <div class="prop-desc">${desc.slice(0,120)}${desc.length>120?'...':''}</div>
-            <div class="prop-id">ID: ${propIdStr.slice(0,30)}...</div>
-            <div class="vote-bar" style="margin-top:12px;">
+            <div class="prop-desc-short" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
+            ${deadlineHtml}
+            <div class="vote-bar">
               <span class="for">✅ For: ${forV}</span>
               <span class="against">❌ Against: ${againstV}</span>
               <span class="abstain">🤷 Abstain: ${abstainV}</span>
             </div>
-            <div class="prop-actions">${actions}</div>
+            ${(st === 1) ? quorumBar(votes.forVotes) : ''}
+            <div class="prop-details" id="details_${propIdStr}">
+              <p><strong>Full description:</strong> ${desc}</p>
+              <p><strong>Target:</strong> ${targetStr}</p>
+              <p><strong>Calldata:</strong> ${calldataStr}</p>
+              <p><strong>Proposal ID:</strong> <span class="addr">${propIdStr}</span></p>
+              <p><strong>Deadline block:</strong> ${deadline.toString()}</p>
+            </div>
+            <div class="prop-actions" style="margin-top:12px;">${actionsHtml}</div>
           </div>`;
         }));
         div.innerHTML = cards.reverse().join('');
       } catch(e) { div.innerHTML = `<p class="error">Failed to load proposals: ${e.message}</p>`; }
     }
 
+    // ── Event delegation for proposal buttons ───────────────────────────────
+    document.addEventListener('click', async function(e) {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action;
+      const propIdStr = el.dataset.propid;
+
+      if (action === 'toggle') {
+        const details = document.getElementById('details_' + propIdStr);
+        if (details) details.classList.toggle('open');
+        return;
+      }
+
+      if (!signer) { showToast('Connect wallet first'); return; }
+      const p = proposalStore[propIdStr];
+      if (!p) return;
+
+      el.disabled = true;
+      const origText = el.textContent;
+      el.textContent = '⏳...';
+
+      try {
+        if (action === 'vote') {
+          const support = Number(el.dataset.support);
+          const reasonEl = document.getElementById('reason_' + propIdStr);
+          const reason = reasonEl ? reasonEl.value.trim() : '';
+          let tx;
+          if (reason) {
+            tx = await govContract.castVoteWithReason(p.propId, support, reason);
+          } else {
+            tx = await govContract.castVote(p.propId, support);
+          }
+          showTxToast('Vote TX sent', tx.hash);
+          await tx.wait();
+          showToast('Vote cast ✅');
+          await loadProposals();
+        } else if (action === 'queue') {
+          const tx = await govContract.queue(p.targets, p.values, p.calldatas, ethers.id(p.desc));
+          showTxToast('Queue TX sent', tx.hash);
+          await tx.wait();
+          showToast('Proposal queued ✅');
+          await loadProposals();
+        } else if (action === 'execute') {
+          const tx = await govContract.execute(p.targets, p.values, p.calldatas, ethers.id(p.desc));
+          showTxToast('Execute TX sent', tx.hash);
+          await tx.wait();
+          showToast('Proposal executed 🚀');
+          await loadProposals();
+        } else if (action === 'cancel') {
+          const tx = await govContract.cancel(p.targets, p.values, p.calldatas, ethers.id(p.desc));
+          showTxToast('Cancel TX sent', tx.hash);
+          await tx.wait();
+          showToast('Proposal canceled');
+          await loadProposals();
+        }
+      } catch(err) {
+        showToast((action.charAt(0).toUpperCase()+action.slice(1)) + ' failed: ' + (err.reason || err.message));
+        el.disabled = false;
+        el.textContent = origText;
+      }
+    });
+
+    // ── Submit proposal ─────────────────────────────────────────────────────
     async function submitProposal(e) {
       e.preventDefault();
       if (!signer) { showToast('Connect wallet first'); return; }
@@ -399,84 +729,42 @@
       document.getElementById('propError').textContent = '';
       if (!ethers.isAddress(target)) { document.getElementById('propError').textContent = 'Invalid target address'; return; }
       if (!desc) { document.getElementById('propError').textContent = 'Description required'; return; }
+      const btn = document.getElementById('submitPropBtn');
+      btn.disabled = true; btn.textContent = 'Submitting...';
       try {
-        showToast('Submitting proposal...');
         const tx = await govContract.propose([target],[0n],[calldata],desc);
-        showToast('TX sent: ' + tx.hash.slice(0,16)+'...');
+        showTxToast('Proposal TX sent', tx.hash);
         await tx.wait();
-        showToast('Proposal created! ✅');
+        showToast('Proposal created ✅');
         document.getElementById('propTarget').value = '';
         document.getElementById('propCalldata').value = '0x';
         document.getElementById('propDesc').value = '';
         await loadProposals();
-      } catch(e) { document.getElementById('propError').textContent = e.reason || e.message; }
+      } catch(err) {
+        document.getElementById('propError').textContent = err.reason || err.message;
+      } finally {
+        btn.disabled = false; btn.textContent = 'Submit Proposal';
+      }
     }
 
-    async function vote(propId, support) {
-      if (!signer) { showToast('Connect wallet first'); return; }
-      try {
-        showToast('Casting vote...');
-        const tx = await govContract.castVote(BigInt(propId), support);
-        showToast('TX sent: ' + tx.hash.slice(0,16)+'...');
-        await tx.wait();
-        showToast('Vote cast! ✅');
-        await loadProposals();
-      } catch(e) { showToast('Vote failed: ' + (e.reason || e.message)); }
-    }
-
-    function descHash(desc) {
-      return ethers.id(desc);
-    }
-
-    async function queueProp(propId, targetsJson, calldatasJson, desc) {
-      if (!signer) { showToast('Connect wallet first'); return; }
-      try {
-        const targets = JSON.parse(targetsJson);
-        const calldatas = JSON.parse(calldatasJson);
-        const values = targets.map(() => 0n);
-        showToast('Queueing proposal...');
-        const tx = await govContract.queue(targets, values, calldatas, descHash(desc));
-        await tx.wait();
-        showToast('Proposal queued! ✅');
-        await loadProposals();
-      } catch(e) { showToast('Queue failed: ' + (e.reason || e.message)); }
-    }
-
-    async function executeProp(propId, targetsJson, calldatasJson, desc) {
-      if (!signer) { showToast('Connect wallet first'); return; }
-      try {
-        const targets = JSON.parse(targetsJson);
-        const calldatas = JSON.parse(calldatasJson);
-        const values = targets.map(() => 0n);
-        showToast('Executing proposal...');
-        const tx = await govContract.execute(targets, values, calldatas, descHash(desc));
-        await tx.wait();
-        showToast('Proposal executed! 🚀');
-        await loadProposals();
-      } catch(e) { showToast('Execute failed: ' + (e.reason || e.message)); }
-    }
-
-    async function cancelProp(propId, targetsJson, calldatasJson, desc) {
-      if (!signer) { showToast('Connect wallet first'); return; }
-      try {
-        const targets = JSON.parse(targetsJson);
-        const calldatas = JSON.parse(calldatasJson);
-        const values = targets.map(() => 0n);
-        showToast('Canceling proposal...');
-        const tx = await govContract.cancel(targets, values, calldatas, descHash(desc));
-        await tx.wait();
-        showToast('Proposal canceled');
-        await loadProposals();
-      } catch(e) { showToast('Cancel failed: ' + (e.reason || e.message)); }
-    }
-
+    // ── Toast ───────────────────────────────────────────────────────────────
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.style.display = 'block';
       t.style.opacity = '1';
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 4000);
+      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 5000);
+    }
+
+    function showTxToast(label, txHash) {
+      const t = document.getElementById('toast');
+      const url = `${net().explorer}/tx/${txHash}`;
+      t.innerHTML = `${label}: <a href="${url}" target="_blank" class="blockscout-link">${txHash.slice(0,18)}…↗</a>`;
+      t.style.display = 'block';
+      t.style.opacity = '1';
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 8000);
     }
 
     init();
