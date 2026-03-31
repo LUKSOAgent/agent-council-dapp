@@ -2,312 +2,1254 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Agent Council DAO</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
   <style>
     :root {
       --pink: #FF2975;
-      --dark: #1A0533;
-      --light: #F0E6FF;
-      --mid: #3D1066;
-      --text: #e8d5ff;
-      --muted: #9b7cc4;
-      --success: #00e676;
-      --warning: #ffab40;
-      --danger: #ff5252;
+      --pink-soft: rgba(255, 41, 117, 0.6);
+      --blue: #5C9EFF;
+      --purple: #9B7CFF;
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-hover: rgba(255, 255, 255, 0.1);
+      --text: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.55);
+      --text-tertiary: rgba(255, 255, 255, 0.35);
+      --success: #30D158;
+      --success-glass: rgba(48, 209, 88, 0.15);
+      --success-border: rgba(48, 209, 88, 0.35);
+      --warning: #FF9F0A;
+      --warning-glass: rgba(255, 159, 10, 0.12);
+      --warning-border: rgba(255, 159, 10, 0.35);
+      --danger: #FF453A;
+      --danger-glass: rgba(255, 69, 58, 0.15);
+      --danger-border: rgba(255, 69, 58, 0.35);
+      --neutral-glass: rgba(255, 255, 255, 0.08);
+      --neutral-border: rgba(255, 255, 255, 0.18);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--dark);
+      background: #060010;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% 10%, rgba(120, 40, 200, 0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(30, 60, 180, 0.2) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50% 50%, rgba(255, 41, 117, 0.06) 0%, transparent 70%);
       color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: -apple-system, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
       min-height: 100vh;
-      padding: 24px;
+      padding: 0;
     }
+
+    /* ── Glass utility ── */
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* ── Header ── */
     header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(6, 0, 16, 0.7);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 12px 20px;
+    }
+
+    .header-inner {
+      max-width: 900px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--mid);
-      flex-wrap: wrap;
       gap: 12px;
+      flex-wrap: wrap;
     }
-    header h1 {
-      font-size: 24px;
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-logo h1 {
+      font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--pink), var(--light));
+      letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, var(--pink), #7B2FBE);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Network switcher ── */
     .network-switcher {
       display: flex;
-      background: var(--mid);
-      border-radius: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: var(--radius-sm);
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--glass-border);
+      padding: 2px;
+      gap: 2px;
     }
+
     .network-btn {
-      padding: 6px 14px;
-      font-size: 13px;
+      padding: 5px 14px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       border: none;
       background: transparent;
-      color: var(--muted);
-      transition: all 0.15s;
+      color: var(--text-secondary);
+      border-radius: 7px;
+      transition: all 0.2s ease;
+      font-family: inherit;
     }
-    .network-btn.active { background: var(--pink); color: #fff; }
-    .network-btn:hover:not(.active) { color: var(--light); }
-    #walletInfo { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-    #walletAddr { font-size: 12px; color: var(--muted); font-family: monospace; }
-    #votePower { font-size: 12px; color: var(--success); }
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: opacity 0.15s;
-    }
-    button:hover { opacity: 0.85; }
-    button:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-primary { background: var(--pink); color: #fff; }
-    .btn-secondary { background: var(--mid); color: var(--light); }
-    .btn-success { background: #00c853; color: #fff; }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-sm { padding: 6px 14px; font-size: 13px; }
-    .btn-xs { padding: 4px 10px; font-size: 12px; }
 
-    .delegation-banner {
-      background: rgba(255,171,64,0.12);
-      border: 1px solid rgba(255,171,64,0.4);
-      border-radius: 10px;
-      padding: 14px 18px;
+    .network-btn.active {
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .network-btn:hover:not(.active) { color: var(--text); }
+
+    /* ── Connect button ── */
+    #connectBtn {
+      background: linear-gradient(135deg, var(--pink) 0%, #9B2FBE 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      box-shadow: 0 2px 12px rgba(255, 41, 117, 0.3);
+    }
+
+    #connectBtn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(255, 41, 117, 0.45);
+    }
+
+    /* ── Wallet info (connected) ── */
+    .wallet-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      padding: 5px 12px 5px 8px;
+    }
+
+    .wallet-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      flex-shrink: 0;
+    }
+
+    #walletAddr {
+      font-size: 12px;
+      color: var(--text);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-weight: 500;
+    }
+
+    #votePower {
+      font-size: 11px;
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* ── Main container ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 16px 60px;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
       margin-bottom: 20px;
+    }
+
+    @media (min-width: 480px) {
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (min-width: 680px) {
+      .stats-bar { grid-template-columns: repeat(5, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover { border-color: rgba(255,255,255,0.2); }
+
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+
+    /* ── Section ── */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
+      margin-bottom: 14px;
     }
-    .delegation-banner span { font-size: 14px; color: var(--warning); }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .card {
-      background: var(--mid);
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid rgba(255,255,255,0.07);
-    }
-    .card h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-    .card .value { font-size: 26px; font-weight: 700; color: var(--light); }
-    .card .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-    section { margin-bottom: 40px; }
-    section h2 {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--light);
-      margin-bottom: 16px;
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.3px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    section h2::before { content: ''; display: block; width: 4px; height: 18px; background: var(--pink); border-radius: 2px; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .section-header h2 { margin-bottom: 0; }
 
-    table { width: 100%; border-collapse: collapse; }
-    th { text-align: left; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 12px; border-bottom: 1px solid var(--mid); }
-    td { padding: 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
-    tr:last-child td { border-bottom: none; }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 3px;
+      height: 16px;
+      background: linear-gradient(to bottom, var(--pink), var(--purple));
+      border-radius: 2px;
+    }
 
+    /* ── Delegation banner ── */
+    .delegation-banner {
+      background: var(--warning-glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--warning-border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .delegation-banner-text {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .delegation-banner-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .delegation-banner-content { flex: 1; }
+
+    .delegation-banner-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--warning);
+      margin-bottom: 2px;
+    }
+
+    .delegation-banner-desc {
+      font-size: 12px;
+      color: rgba(255, 159, 10, 0.7);
+    }
+
+    /* ── Buttons ── */
+    button {
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+    .btn-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--glass-border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .btn-glass:hover {
+      background: var(--glass-hover);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: var(--radius-sm); }
+    .btn-xs { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pink) 0%, #9B2FBE 100%);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      box-shadow: 0 2px 12px rgba(255, 41, 117, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(255, 41, 117, 0.4);
+    }
+
+    .btn-warning {
+      background: var(--warning-glass);
+      border: 1px solid var(--warning-border);
+      color: var(--warning);
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+    }
+
+    .btn-warning:hover { background: rgba(255, 159, 10, 0.2); }
+
+    /* ── Vote buttons (large) ── */
+    .vote-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .vote-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 14px 8px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      font-family: inherit;
+    }
+
+    .vote-btn-icon { font-size: 20px; }
+
+    .vote-btn-for {
+      background: var(--success-glass);
+      border-color: var(--success-border);
+      color: var(--success);
+    }
+    .vote-btn-for:hover {
+      background: rgba(48, 209, 88, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(48, 209, 88, 0.2);
+    }
+
+    .vote-btn-against {
+      background: var(--danger-glass);
+      border-color: var(--danger-border);
+      color: var(--danger);
+    }
+    .vote-btn-against:hover {
+      background: rgba(255, 69, 58, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 69, 58, 0.2);
+    }
+
+    .vote-btn-abstain {
+      background: var(--neutral-glass);
+      border-color: var(--neutral-border);
+      color: var(--text-secondary);
+    }
+    .vote-btn-abstain:hover {
+      background: rgba(255,255,255,0.14);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,255,255,0.08);
+    }
+
+    /* ── Council Members table ── */
+    .members-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .members-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      align-items: center;
+      transition: background 0.15s;
+    }
+
+    .members-row:last-child { border-bottom: none; }
+    .members-row:hover { background: rgba(255,255,255,0.03); }
+
+    .member-header {
+      padding: 10px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .member-header-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .member-info { display: flex; flex-direction: column; gap: 3px; }
+    .member-name { font-size: 14px; font-weight: 600; color: var(--text); }
+    .member-addr { font-size: 11px; color: var(--text-secondary); font-family: 'SF Mono', monospace; }
+    .member-votes { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+    .member-balance { font-size: 14px; font-weight: 700; color: var(--text); }
+    .member-votes-sub { font-size: 11px; color: var(--text-secondary); }
+
+    /* ── Proposal cards ── */
+    .proposal-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 14px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .proposal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    }
+
+    .proposal-card:hover {
+      border-color: rgba(255,255,255,0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .proposal-card.active-proposal {
+      border-color: rgba(48, 209, 88, 0.3);
+      box-shadow: 0 0 0 1px rgba(48, 209, 88, 0.1), 0 4px 24px rgba(0,0,0,0.2);
+    }
+
+    .prop-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .prop-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .prop-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+      cursor: pointer;
+      flex: 1;
+    }
+    .prop-title:hover { color: rgba(255,255,255,0.75); }
+
+    /* ── Badges ── */
     .badge {
-      display: inline-block;
-      padding: 2px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
       border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+
+    .badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .badge-active {
+      background: rgba(48, 209, 88, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+    }
+
+    .badge-pending {
+      background: rgba(255, 159, 10, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(255, 159, 10, 0.28);
+    }
+
+    .badge-succeeded {
+      background: rgba(92, 158, 255, 0.12);
+      color: var(--blue);
+      border: 1px solid rgba(92, 158, 255, 0.28);
+    }
+
+    .badge-queued {
+      background: rgba(155, 124, 255, 0.12);
+      color: var(--purple);
+      border: 1px solid rgba(155, 124, 255, 0.28);
+    }
+
+    .badge-executed {
+      background: rgba(255,255,255,0.07);
+      color: var(--text-secondary);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .badge-defeated {
+      background: rgba(255, 69, 58, 0.1);
+      color: var(--danger);
+      border: 1px solid rgba(255, 69, 58, 0.22);
+    }
+
+    .badge-canceled, .badge-expired {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-tertiary);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .badge-voted {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(48, 209, 88, 0.25);
+      font-size: 11px;
+    }
+
+    .badge-clawback {
+      background: rgba(255,159,10,0.1);
+      color: var(--warning);
+      border: 1px solid rgba(255,159,10,0.22);
+      font-size: 10px;
+      padding: 2px 8px;
+      margin-left: 4px;
+    }
+
+    /* ── Deadline ── */
+    .prop-deadline {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .prop-deadline-icon { opacity: 0.6; }
+
+    /* ── Vote progress ── */
+    .vote-progress {
+      margin-bottom: 12px;
+    }
+
+    .vote-split {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .vote-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
     }
-    .badge-active { background: rgba(0,230,118,0.15); color: var(--success); }
-    .badge-pending { background: rgba(255,171,64,0.15); color: var(--warning); }
-    .badge-succeeded { background: rgba(0,230,118,0.15); color: var(--success); }
-    .badge-defeated { background: rgba(255,82,82,0.15); color: var(--danger); }
-    .badge-queued { background: rgba(120,86,255,0.15); color: #9b7cff; }
-    .badge-executed { background: rgba(255,255,255,0.1); color: var(--muted); }
-    .badge-canceled { background: rgba(255,82,82,0.1); color: var(--danger); }
-    .badge-expired { background: rgba(255,255,255,0.1); color: var(--muted); }
-    .badge-voted { background: rgba(0,200,83,0.15); color: #69f0ae; }
-    .badge-clawback { background: rgba(255,171,64,0.1); color: var(--warning); font-size: 11px; padding: 2px 8px; margin-left: 6px; }
 
-    form { background: var(--mid); border-radius: 12px; padding: 24px; max-width: 640px; }
-    label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; margin-top: 16px; }
-    label:first-child { margin-top: 0; }
+    .vote-chip-for {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(48, 209, 88, 0.22);
+    }
+
+    .vote-chip-against {
+      background: rgba(255, 69, 58, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 69, 58, 0.22);
+    }
+
+    .vote-chip-abstain {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-secondary);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Visual progress bar row */
+    .vote-bar-visual {
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+      display: flex;
+      gap: 1px;
+      margin-bottom: 6px;
+    }
+
+    .vote-bar-for { height: 100%; background: var(--success); border-radius: 100px; transition: width 0.5s ease; }
+    .vote-bar-against { height: 100%; background: var(--danger); border-radius: 100px; transition: width 0.5s ease; }
+    .vote-bar-abstain { height: 100%; background: rgba(255,255,255,0.2); border-radius: 100px; transition: width 0.5s ease; }
+
+    .vote-pct-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* ── Quorum bar ── */
+    .quorum-bar-wrap {
+      margin-bottom: 14px;
+    }
+
+    .quorum-bar-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .quorum-bar-label-left { display: flex; align-items: center; gap: 5px; }
+
+    .quorum-bar-track {
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .quorum-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--pink), #7B2FBE);
+      border-radius: 100px;
+      transition: width 0.5s ease;
+    }
+
+    .quorum-bar-fill.met {
+      background: linear-gradient(90deg, var(--success), #00C853);
+    }
+
+    /* ── Vote section within card ── */
+    .vote-section {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .vote-section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .vote-power-note {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    .vote-reason-wrap { margin-top: 10px; }
+
+    .vote-reason-label {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    /* ── Prop details (expandable) ── */
+    .prop-details {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .prop-details.open { display: block; }
+
+    .prop-detail-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 10px;
+    }
+
+    .prop-detail-key {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .prop-detail-val {
+      font-size: 12px;
+      color: var(--text-secondary);
+      word-break: break-all;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    .prop-detail-val.readable {
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* ── Prop actions ── */
+    .prop-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn-action-queue {
+      background: rgba(92, 158, 255, 0.12);
+      border: 1px solid rgba(92, 158, 255, 0.3);
+      color: var(--blue);
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-action-queue:hover { background: rgba(92, 158, 255, 0.2); }
+
+    .btn-action-execute {
+      background: rgba(48, 209, 88, 0.12);
+      border: 1px solid rgba(48, 209, 88, 0.3);
+      color: var(--success);
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .btn-action-execute:hover { background: rgba(48, 209, 88, 0.22); }
+
+    .btn-action-cancel {
+      background: rgba(255, 69, 58, 0.08);
+      border: 1px solid rgba(255, 69, 58, 0.2);
+      color: rgba(255, 69, 58, 0.7);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .btn-action-cancel:hover { background: rgba(255, 69, 58, 0.15); }
+
+    .btn-toggle-details {
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 12px;
+      padding: 4px 0;
+      font-family: inherit;
+    }
+    .btn-toggle-details:hover { color: var(--text-secondary); }
+
+    /* ── Filter bar ── */
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .filter-btn.active {
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .filter-btn:hover:not(.active) {
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .empty-state-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      max-width: 300px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* ── Forms ── */
+    .form-glass {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      max-width: 640px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    .form-label:first-child { margin-top: 0; }
+
     input, textarea, select {
       width: 100%;
-      background: rgba(0,0,0,0.3);
+      background: rgba(0, 0, 0, 0.25);
       border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       color: var(--text);
-      padding: 10px 14px;
+      padding: 11px 14px;
       font-size: 14px;
       font-family: inherit;
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
     }
-    input:focus, textarea:focus { border-color: var(--pink); }
+
+    input:focus, textarea:focus {
+      border-color: rgba(255, 41, 117, 0.5);
+      box-shadow: 0 0 0 3px rgba(255, 41, 117, 0.08);
+    }
+
     textarea { min-height: 80px; resize: vertical; }
-    .form-actions { margin-top: 20px; display: flex; gap: 10px; }
 
-    .proposal-card {
-      background: var(--mid);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid rgba(255,255,255,0.06);
-      transition: border-color 0.15s;
-    }
-    .proposal-card:hover { border-color: rgba(255,41,117,0.3); }
-    .proposal-card .prop-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      gap: 12px;
-    }
-    .proposal-card .prop-id { font-size: 11px; color: var(--muted); font-family: monospace; cursor: pointer; }
-    .proposal-card .prop-id:hover { color: var(--light); }
-    .prop-desc-short { font-size: 15px; font-weight: 600; color: var(--light); margin-bottom: 4px; cursor: pointer; }
-    .prop-desc-short:hover { color: var(--pink); }
-    .prop-details {
-      display: none;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.07);
+    .vote-reason-input {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 10px 12px;
       font-size: 13px;
-      color: var(--muted);
+      font-family: inherit;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+      min-height: 52px;
     }
-    .prop-details.open { display: block; }
-    .prop-details p { margin-bottom: 6px; word-break: break-all; }
-    .prop-details strong { color: var(--text); }
-    .prop-deadline { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
-    .vote-bar { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-    .vote-bar .for { background: rgba(0,200,83,0.3); color: #69f0ae; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
-    .vote-bar .against { background: rgba(255,82,82,0.3); color: #ff8a80; padding: 4px 12px; border-radius: 6px; font-size: 13px; }
-    .vote-bar .abstain { background: rgba(255,255,255,0.1); color: var(--muted); padding: 4px 12px; border-radius: 6px; font-size: 13px; }
 
-    .quorum-bar-wrap { margin-bottom: 14px; }
-    .quorum-bar-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .quorum-bar-track { height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-    .quorum-bar-fill { height: 100%; background: linear-gradient(90deg, var(--pink), #ff6b6b); border-radius: 3px; transition: width 0.4s; }
-    .quorum-bar-fill.met { background: linear-gradient(90deg, #00c853, #69f0ae); }
+    .vote-reason-input:focus {
+      border-color: rgba(255,255,255,0.2);
+    }
 
-    .vote-reason { margin-top: 8px; margin-bottom: 8px; }
-    .vote-reason textarea { min-height: 50px; font-size: 13px; }
-    .prop-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .form-actions {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
-    #connectBtn { background: linear-gradient(135deg, var(--pink), #7b1fa2); color: #fff; }
-    .addr { font-family: monospace; font-size: 12px; color: var(--muted); }
-    .loading { color: var(--muted); font-size: 14px; font-style: italic; }
-    .error { color: var(--danger); font-size: 13px; margin-top: 8px; }
+    .form-error {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--danger);
+      background: var(--danger-glass);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      display: none;
+    }
+
+    .form-error.visible { display: block; }
+
+    /* ── Toast ── */
     .toast {
       position: fixed;
       bottom: 24px;
-      right: 24px;
-      background: var(--mid);
-      color: var(--light);
-      padding: 14px 20px;
-      border-radius: 10px;
-      border-left: 4px solid var(--pink);
-      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-      font-size: 14px;
+      right: 16px;
+      left: 16px;
       max-width: 420px;
+      margin: 0 auto;
+      background: rgba(20, 10, 40, 0.9);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      color: var(--text);
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-left: 3px solid var(--pink);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      font-size: 13px;
+      font-weight: 500;
       z-index: 1000;
-      transition: opacity 0.3s;
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
-    .toast a { color: var(--pink); }
-    .agent-row td:first-child { font-weight: 600; color: var(--light); }
-    .blockscout-link { font-size: 11px; color: var(--pink); text-decoration: none; }
-    .blockscout-link:hover { text-decoration: underline; }
+
+    @media (min-width: 480px) {
+      .toast {
+        right: 24px;
+        left: auto;
+      }
+    }
+
+    .toast a { color: var(--pink); text-decoration: none; }
+    .toast a:hover { text-decoration: underline; }
+
+    /* ── Loading/Error states ── */
+    .loading-text {
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .error-text {
+      color: var(--danger);
+      font-size: 13px;
+      padding: 16px;
+      background: var(--danger-glass);
+      border: 1px solid var(--danger-border);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ── Blockscout link ── */
+    .blockscout-link {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+
+    .blockscout-link:hover { color: var(--text-secondary); }
+
+    /* ── Addr mono ── */
+    .addr {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* ── Current vote indicator ── */
+    .current-vote-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(48, 209, 88, 0.08);
+      border: 1px solid rgba(48, 209, 88, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    /* ── Mobile adjustments ── */
+    @media (max-width: 479px) {
+      .header-logo h1 { font-size: 16px; }
+      .stat-value { font-size: 18px; }
+      .proposal-card { padding: 16px; border-radius: var(--radius-md); }
+      .vote-buttons { gap: 6px; }
+      .vote-btn { padding: 12px 6px; font-size: 12px; }
+      .vote-btn-icon { font-size: 18px; }
+      .form-glass { padding: 18px; border-radius: var(--radius-md); }
+    }
+
+    /* ── Separator ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      margin: 24px 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
   </style>
 </head>
 <body>
+
+  <!-- ── Header ── -->
   <header>
-    <h1>⚖️ Agent Council DAO</h1>
-    <div class="header-right">
-      <div class="network-switcher">
-        <button class="network-btn active" id="btnMainnet" onclick="switchNetwork('mainnet')">Mainnet</button>
-        <button class="network-btn" id="btnTestnet" onclick="switchNetwork('testnet')">Testnet</button>
+    <div class="header-inner">
+      <div class="header-logo">
+        <div class="logo-icon">⚖️</div>
+        <h1>Agent Council</h1>
       </div>
-      <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
-      <div id="walletInfo" style="display:none;">
-        <span id="walletAddr"></span>
-        <span id="votePower"></span>
+      <div class="header-controls">
+        <div class="network-switcher">
+          <button class="network-btn active" id="btnMainnet" onclick="switchNetwork('mainnet')">Mainnet</button>
+          <button class="network-btn" id="btnTestnet" onclick="switchNetwork('testnet')">Testnet</button>
+        </div>
+        <button id="connectBtn" onclick="connectWallet()">Connect Wallet</button>
+        <div id="walletInfo" style="display:none;">
+          <div class="wallet-pill">
+            <div class="wallet-dot"></div>
+            <span id="walletAddr"></span>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <!-- Delegation banner (shown when wallet connected but not delegated) -->
-  <div class="delegation-banner" id="delegationBanner" style="display:none;">
-    <span>⚠️ You haven't delegated your votes yet — you can hold tokens but can't vote until you delegate.</span>
-    <button class="btn-primary btn-sm" id="delegateBtn" onclick="delegateToSelf()">Delegate to self</button>
-  </div>
+  <div class="container">
 
-  <!-- Stats -->
-  <div class="grid" id="statsGrid">
-    <div class="card"><h3>Total Supply</h3><div class="value" id="totalSupply">—</div><div class="sub">COUNCIL tokens</div></div>
-    <div class="card"><h3>Quorum</h3><div class="value" id="quorum">—</div><div class="sub">% of supply required</div></div>
-    <div class="card"><h3>Voting Delay</h3><div class="value" id="votingDelay">—</div><div class="sub" id="votingDelaySub"></div></div>
-    <div class="card"><h3>Voting Period</h3><div class="value" id="votingPeriod">—</div><div class="sub" id="votingPeriodSub"></div></div>
-    <div class="card"><h3>Timelock Delay</h3><div class="value" id="timelockDelay">—</div><div class="sub">before execution</div></div>
-  </div>
-
-  <!-- Token Holders -->
-  <section>
-    <div class="section-header">
-      <h2>Council Members</h2>
-      <button class="btn-secondary btn-xs" onclick="loadHolders()">↻ Refresh</button>
-    </div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Agent</th><th>Address</th><th>Balance</th><th>Votes</th></tr></thead>
-        <tbody id="holdersTable"><tr><td colspan="4" class="loading">Loading...</td></tr></tbody>
-      </table>
-    </div>
-  </section>
-
-  <!-- Proposals -->
-  <section>
-    <div class="section-header">
-      <h2>Proposals</h2>
-      <button class="btn-secondary btn-xs" onclick="loadProposals()">↻ Refresh</button>
-    </div>
-    <div id="proposalsList"><p class="loading">Loading proposals...</p></div>
-  </section>
-
-  <!-- Propose -->
-  <section>
-    <h2>Create Proposal</h2>
-    <form onsubmit="submitProposal(event)">
-      <label>Target Address</label>
-      <input id="propTarget" placeholder="0x..." />
-      <label>Calldata (hex)</label>
-      <input id="propCalldata" placeholder="0x (empty for no-op)" value="0x" />
-      <label>Description</label>
-      <textarea id="propDesc" placeholder="Describe your proposal..."></textarea>
-      <div class="form-actions">
-        <button type="submit" class="btn-primary" id="submitPropBtn">Submit Proposal</button>
+    <!-- ── Delegation banner ── -->
+    <div class="delegation-banner" id="delegationBanner" style="display:none;">
+      <div class="delegation-banner-text">
+        <div class="delegation-banner-icon">⚠️</div>
+        <div class="delegation-banner-content">
+          <div class="delegation-banner-title">Votes not delegated</div>
+          <div class="delegation-banner-desc">You hold tokens but can't vote until you delegate your voting power.</div>
+        </div>
       </div>
-      <div id="propError" class="error"></div>
-    </form>
-  </section>
+      <button class="btn-warning btn-sm" id="delegateBtn" onclick="delegateToSelf()">Delegate to self →</button>
+    </div>
 
-  <div id="toast" class="toast" style="display:none;"></div>
+    <!-- ── Stats bar ── -->
+    <div class="stats-bar" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Current Block</div>
+        <div class="stat-value" id="currentBlockDisplay">—</div>
+        <div class="stat-sub">LUKSO chain</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Your Power</div>
+        <div class="stat-value" id="statVotePower">—</div>
+        <div class="stat-sub" id="statTokenBalance">connect wallet</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Supply</div>
+        <div class="stat-value" id="totalSupply">—</div>
+        <div class="stat-sub">COUNCIL tokens</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Quorum</div>
+        <div class="stat-value" id="quorum">—</div>
+        <div class="stat-sub">% of supply needed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Timelock</div>
+        <div class="stat-value" id="timelockDelay">—</div>
+        <div class="stat-sub" id="votingPeriodSub">before execution</div>
+      </div>
+    </div>
+
+    <!-- ── Council Members ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Council Members</div>
+        <button class="btn-glass btn-xs" onclick="loadHolders()">↻ Refresh</button>
+      </div>
+      <div class="members-glass">
+        <div class="member-header">
+          <div class="member-header-label">Agent</div>
+          <div class="member-header-label">Balance / Votes</div>
+        </div>
+        <div id="holdersTable">
+          <div class="loading-text">Loading members...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── Proposals ── -->
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">Proposals</div>
+        <button class="btn-glass btn-xs" onclick="loadProposals()">↻ Refresh</button>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all" onclick="filterProposals('all', this)">All</button>
+        <button class="filter-btn" data-filter="1" onclick="filterProposals('1', this)">Active</button>
+        <button class="filter-btn" data-filter="4" onclick="filterProposals('4', this)">Succeeded</button>
+        <button class="filter-btn" data-filter="5" onclick="filterProposals('5', this)">Queued</button>
+        <button class="filter-btn" data-filter="7" onclick="filterProposals('7', this)">Executed</button>
+        <button class="filter-btn" data-filter="3" onclick="filterProposals('3', this)">Defeated</button>
+      </div>
+
+      <div id="proposalsList">
+        <div class="loading-text">Loading proposals...</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── Create Proposal ── -->
+    <div class="section">
+      <div class="section-title" style="margin-bottom:16px;">Create Proposal</div>
+      <form class="form-glass" onsubmit="submitProposal(event)">
+        <label class="form-label">Target Address</label>
+        <input id="propTarget" placeholder="0x..." />
+        <label class="form-label">Calldata (hex)</label>
+        <input id="propCalldata" placeholder="0x" value="0x" />
+        <label class="form-label">Description</label>
+        <textarea id="propDesc" placeholder="Describe your proposal..."></textarea>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="submitPropBtn">Submit Proposal</button>
+        </div>
+        <div id="propError" class="form-error"></div>
+      </form>
+    </div>
+
+  </div><!-- /container -->
+
+  <div id="toast" class="toast" style="display:none;opacity:0;"></div>
 
   <script>
     // ── Network config ──────────────────────────────────────────────────────
@@ -338,10 +1280,10 @@
       { name: 'LUKSOAgent', addr: '0x293E96ebbf264ed7715cff2b67850517De70232a' },
       { name: 'Emmet',      addr: '0x1089E1c613Db8Cb91db72be4818632153E62557a' },
       { name: 'Leo',        addr: '0x1e0267B7e88B97d5037e410bdC61D105e04ca02A' },
-      { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450', note: 'clawback active until Apr 25' },
+      { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450', note: 'clawback until Apr 25' },
     ];
 
-    const BLOCKS_PER_SEC = 6; // LUKSO ~6s/block
+    const BLOCKS_PER_SEC = 6;
 
     const GOV_ABI = [
       'function propose(address[],uint256[],bytes[],string) returns (uint256)',
@@ -361,13 +1303,16 @@
       'function quorum(uint256) view returns (uint256)',
       'event ProposalCreated(uint256 proposalId, address proposer, address[] targets, uint256[] values, string[] signatures, bytes[] calldatas, uint256 voteStart, uint256 voteEnd, string description)',
     ];
+
     const TOKEN_ABI = [
       'function balanceOf(address) view returns (uint256)',
       'function totalSupply() view returns (uint256)',
       'function delegates(address) view returns (address)',
       'function getVotes(address) view returns (uint256)',
+      'function getPastVotes(address,uint256) view returns (uint256)',
       'function delegate(address) returns ()',
     ];
+
     const TIMELOCK_ABI = [
       'function getMinDelay() view returns (uint256)',
     ];
@@ -378,9 +1323,9 @@
     let currentBlock = 0;
     let totalSupplyRaw = 0n;
     let quorumNumeratorVal = 0n;
-
-    // Proposal data store (avoids onclick injection)
     const proposalStore = {};
+    let allProposalCards = [];
+    let activeFilter = 'all';
 
     // ── Network switch ──────────────────────────────────────────────────────
     function switchNetwork(net) {
@@ -391,6 +1336,8 @@
       document.getElementById('connectBtn').textContent = 'Connect Wallet';
       document.getElementById('walletInfo').style.display = 'none';
       document.getElementById('delegationBanner').style.display = 'none';
+      document.getElementById('statVotePower').textContent = '—';
+      document.getElementById('statTokenBalance').textContent = 'connect wallet';
       init();
     }
 
@@ -402,7 +1349,10 @@
       govContract = new ethers.Contract(net().GOVERNOR, GOV_ABI, provider);
       tokenContract = new ethers.Contract(net().TOKEN, TOKEN_ABI, provider);
       timelockContract = new ethers.Contract(net().TIMELOCK, TIMELOCK_ABI, provider);
-      try { currentBlock = Number(await provider.getBlockNumber()); } catch(e) {}
+      try {
+        currentBlock = Number(await provider.getBlockNumber());
+        document.getElementById('currentBlockDisplay').textContent = currentBlock.toLocaleString();
+      } catch(e) {}
       await Promise.all([loadStats(), loadHolders(), loadProposals()]);
     }
 
@@ -427,11 +1377,10 @@
         signerAddr = await signer.getAddress();
         govContract = new ethers.Contract(net().GOVERNOR, GOV_ABI, signer);
         tokenContract = new ethers.Contract(net().TOKEN, TOKEN_ABI, signer);
-        document.getElementById('connectBtn').textContent = 'Connected';
-        document.getElementById('walletAddr').textContent = signerAddr.slice(0,6)+'...'+signerAddr.slice(-4);
+        document.getElementById('connectBtn').style.display = 'none';
+        document.getElementById('walletAddr').textContent = signerAddr.slice(0,6)+'…'+signerAddr.slice(-4);
         document.getElementById('walletInfo').style.display = 'flex';
-        await updateVotePower();
-        await checkDelegation();
+        await Promise.all([updateVotePower(), checkDelegation()]);
         await loadProposals();
       } catch(e) { showToast('Connect failed: ' + e.message); }
     }
@@ -439,9 +1388,14 @@
     async function updateVotePower() {
       if (!signerAddr) return;
       try {
-        const votes = await tokenContract.getVotes(signerAddr);
-        const formatted = Number(ethers.formatUnits(votes, 18)).toLocaleString();
-        document.getElementById('votePower').textContent = `${formatted} votes`;
+        const [votes, bal] = await Promise.all([
+          tokenContract.getVotes(signerAddr),
+          tokenContract.balanceOf(signerAddr),
+        ]);
+        const votesFormatted = Number(ethers.formatUnits(votes, 18)).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        const balFormatted = Number(ethers.formatUnits(bal, 18)).toLocaleString(undefined, { maximumFractionDigits: 0 });
+        document.getElementById('statVotePower').textContent = votesFormatted;
+        document.getElementById('statTokenBalance').textContent = `${balFormatted} tokens`;
       } catch(e) {}
     }
 
@@ -462,16 +1416,16 @@
       btn.disabled = true; btn.textContent = 'Delegating...';
       try {
         const tx = await tokenContract.delegate(signerAddr);
-        showToast('TX sent... waiting for confirmation');
+        showToast('Transaction sent — waiting for confirmation...');
         await tx.wait();
-        showToast('Votes delegated ✅');
+        showToast('Votes delegated ✓');
         document.getElementById('delegationBanner').style.display = 'none';
         await updateVotePower();
         await loadProposals();
       } catch(e) {
         showToast('Delegation failed: ' + (e.reason || e.message));
       } finally {
-        btn.disabled = false; btn.textContent = 'Delegate to self';
+        btn.disabled = false; btn.textContent = 'Delegate to self →';
       }
     }
 
@@ -481,7 +1435,7 @@
       if (secs < 120) return `~${secs}s`;
       if (secs < 7200) return `~${Math.round(secs/60)}min`;
       if (secs < 172800) return `~${Math.round(secs/3600)}h`;
-      return `~${Math.round(secs/86400)} days`;
+      return `~${Math.round(secs/86400)}d`;
     }
 
     async function loadStats() {
@@ -495,66 +1449,80 @@
         ]);
         totalSupplyRaw = supply;
         quorumNumeratorVal = quorum;
-        document.getElementById('totalSupply').textContent = Number(ethers.formatUnits(supply,18)).toLocaleString();
+        document.getElementById('totalSupply').textContent = Number(ethers.formatUnits(supply,18)).toLocaleString(undefined, {maximumFractionDigits:0});
         document.getElementById('quorum').textContent = quorum.toString() + '%';
-        document.getElementById('votingDelay').textContent = Number(delay).toLocaleString();
-        document.getElementById('votingDelaySub').textContent = `blocks (${blocksToHuman(delay)})`;
-        document.getElementById('votingPeriod').textContent = Number(period).toLocaleString();
-        document.getElementById('votingPeriodSub').textContent = `blocks (${blocksToHuman(period)})`;
         const delaySecs = Number(timelockDelay);
         const delayH = Math.round(delaySecs / 3600);
         document.getElementById('timelockDelay').textContent = delayH >= 24 ? `${Math.round(delayH/24)}d` : `${delayH}h`;
+        document.getElementById('votingPeriodSub').textContent = `voting: ${blocksToHuman(period)}`;
       } catch(e) { console.error('Stats error', e); }
     }
 
     // ── Holders ─────────────────────────────────────────────────────────────
     async function loadHolders() {
-      const tbody = document.getElementById('holdersTable');
-      tbody.innerHTML = '<tr><td colspan="4" class="loading">Loading...</td></tr>';
+      const container = document.getElementById('holdersTable');
+      container.innerHTML = '<div class="loading-text">Loading...</div>';
       try {
         const rows = await Promise.all(AGENTS.map(async a => {
           const [bal, votes] = await Promise.all([
             tokenContract.balanceOf(a.addr),
             tokenContract.getVotes(a.addr),
           ]);
+          const balFmt = Number(ethers.formatUnits(bal,18)).toLocaleString(undefined, {maximumFractionDigits:0});
+          const votesFmt = Number(ethers.formatUnits(votes,18)).toLocaleString(undefined, {maximumFractionDigits:0});
           const noteHtml = a.note ? `<span class="badge badge-clawback">${a.note}</span>` : '';
           const explorerLink = `${net().explorer}/address/${a.addr}`;
-          return `<tr class="agent-row">
-            <td>${a.name}${noteHtml}</td>
-            <td class="addr"><a href="${explorerLink}" target="_blank" class="blockscout-link">${a.addr.slice(0,10)}...${a.addr.slice(-6)}</a></td>
-            <td>${Number(ethers.formatUnits(bal,18)).toLocaleString()}</td>
-            <td>${Number(ethers.formatUnits(votes,18)).toLocaleString()}</td>
-          </tr>`;
+          return `<div class="members-row">
+            <div class="member-info">
+              <div class="member-name">${a.name}${noteHtml}</div>
+              <a href="${explorerLink}" target="_blank" class="blockscout-link">
+                <span class="member-addr">${a.addr.slice(0,8)}…${a.addr.slice(-6)}</span> ↗
+              </a>
+            </div>
+            <div class="member-votes">
+              <div class="member-balance">${balFmt}</div>
+              <div class="member-votes-sub">${votesFmt} votes</div>
+            </div>
+          </div>`;
         }));
-        tbody.innerHTML = rows.join('');
-      } catch(e) { tbody.innerHTML = `<tr><td colspan="4" class="error">Failed to load: ${e.message}</td></tr>`; }
+        container.innerHTML = rows.join('');
+      } catch(e) {
+        container.innerHTML = `<div class="error-text">Failed to load members: ${e.message}</div>`;
+      }
     }
 
-    // ── Proposal helpers ────────────────────────────────────────────────────
+    // ── Helpers ─────────────────────────────────────────────────────────────
     const STATE_LABELS = ['Pending','Active','Canceled','Defeated','Succeeded','Queued','Expired','Executed'];
-    const STATE_BADGES = ['badge-pending','badge-active','badge-canceled','badge-defeated','badge-succeeded','badge-queued','badge-expired','badge-executed'];
+    const STATE_BADGE_CLASSES = ['badge-pending','badge-active','badge-canceled','badge-defeated','badge-succeeded','badge-queued','badge-expired','badge-executed'];
 
     function deadlineText(deadlineBlock) {
       const blocksLeft = Number(deadlineBlock) - currentBlock;
       if (blocksLeft <= 0) return 'Voting ended';
       const secsLeft = blocksLeft * BLOCKS_PER_SEC;
-      if (secsLeft < 120) return `Closes in ~${secsLeft}s (block ${deadlineBlock})`;
-      if (secsLeft < 7200) return `Closes in ~${Math.round(secsLeft/60)} min (block ${deadlineBlock})`;
-      if (secsLeft < 172800) return `Closes in ~${Math.round(secsLeft/3600)}h (block ${deadlineBlock})`;
-      return `Closes in ~${Math.round(secsLeft/86400)} days (block ${deadlineBlock})`;
+      const estimated = new Date(Date.now() + secsLeft * 1000);
+      const opts = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+      const dateStr = estimated.toLocaleDateString('en-US', opts);
+      if (secsLeft < 120) return `Closes in ~${secsLeft}s`;
+      if (secsLeft < 7200) return `Closes in ~${Math.round(secsLeft/60)} min (${dateStr})`;
+      if (secsLeft < 172800) return `Closes in ~${Math.round(secsLeft/3600)}h (${dateStr})`;
+      return `Closes in ~${Math.round(secsLeft/86400)}d (${dateStr})`;
     }
 
-    function quorumBar(forVotes) {
+    function quorumBarHTML(forVotes) {
       if (totalSupplyRaw === 0n) return '';
       const quorumRequired = totalSupplyRaw * quorumNumeratorVal / 100n;
       const forNum = Number(ethers.formatUnits(forVotes, 18));
       const reqNum = Number(ethers.formatUnits(quorumRequired, 18));
       const pct = reqNum > 0 ? Math.min(100, Math.round(forNum / reqNum * 100)) : 0;
       const met = forVotes >= quorumRequired;
+      const metText = met ? '<span style="color:var(--success);font-weight:700;">✓ Met</span>' : '';
       return `<div class="quorum-bar-wrap">
         <div class="quorum-bar-label">
-          <span>Quorum progress</span>
-          <span>${forNum.toLocaleString(undefined,{maximumFractionDigits:0})} / ${reqNum.toLocaleString(undefined,{maximumFractionDigits:0})} (${pct}%)</span>
+          <div class="quorum-bar-label-left">
+            <span>Quorum</span>
+            ${metText}
+          </div>
+          <span>${forNum.toLocaleString(undefined,{maximumFractionDigits:0})} / ${reqNum.toLocaleString(undefined,{maximumFractionDigits:0})} <span style="opacity:0.55">(${pct}% of ${quorumNumeratorVal.toString()}% needed)</span></span>
         </div>
         <div class="quorum-bar-track">
           <div class="quorum-bar-fill ${met?'met':''}" style="width:${pct}%"></div>
@@ -562,15 +1530,89 @@
       </div>`;
     }
 
+    function voteProgressHTML(forVotes, againstVotes, abstainVotes) {
+      const forN = Number(ethers.formatUnits(forVotes, 18));
+      const againstN = Number(ethers.formatUnits(againstVotes, 18));
+      const abstainN = Number(ethers.formatUnits(abstainVotes, 18));
+      const total = forN + againstN + abstainN;
+
+      const forPct = total > 0 ? Math.round(forN / total * 100) : 0;
+      const againstPct = total > 0 ? Math.round(againstN / total * 100) : 0;
+      const abstainPct = total > 0 ? Math.min(100 - forPct - againstPct, Math.round(abstainN / total * 100)) : 0;
+
+      const fmt = v => v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+      return `<div class="vote-progress">
+        <div class="vote-split">
+          <span class="vote-chip vote-chip-for">✓ For ${fmt(forN)}</span>
+          <span class="vote-chip vote-chip-against">✗ Against ${fmt(againstN)}</span>
+          <span class="vote-chip vote-chip-abstain">~ Abstain ${fmt(abstainN)}</span>
+        </div>
+        ${total > 0 ? `
+        <div class="vote-bar-visual">
+          <div class="vote-bar-for" style="width:${forPct}%"></div>
+          <div class="vote-bar-against" style="width:${againstPct}%"></div>
+          <div class="vote-bar-abstain" style="width:${abstainPct}%"></div>
+        </div>
+        <div class="vote-pct-row">
+          <span style="color:var(--success)">${forPct}% for</span>
+          <span style="color:var(--danger)">${againstPct}% against</span>
+          <span>${abstainPct}% abstain</span>
+        </div>` : ''}
+      </div>`;
+    }
+
+    // ── Filter proposals ─────────────────────────────────────────────────────
+    function filterProposals(filter, btn) {
+      activeFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const allCards = document.querySelectorAll('.proposal-card[data-state]');
+      let visible = 0;
+      allCards.forEach(card => {
+        const show = filter === 'all' || card.dataset.state === filter;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      // Show empty state if nothing visible
+      let emptyEl = document.getElementById('filterEmptyState');
+      if (visible === 0 && allCards.length > 0) {
+        if (!emptyEl) {
+          emptyEl = document.createElement('div');
+          emptyEl.id = 'filterEmptyState';
+          emptyEl.className = 'empty-state';
+          emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div>
+            <div class="empty-state-title">No proposals here</div>
+            <div class="empty-state-desc">No proposals match this filter. Try "All" to see everything.</div>`;
+          document.getElementById('proposalsList').appendChild(emptyEl);
+        }
+        emptyEl.style.display = '';
+      } else if (emptyEl) {
+        emptyEl.style.display = 'none';
+      }
+    }
+
     // ── Load proposals ──────────────────────────────────────────────────────
     async function loadProposals() {
       const div = document.getElementById('proposalsList');
-      div.innerHTML = '<p class="loading">Loading proposals...</p>';
+      div.innerHTML = '<div class="loading-text">Loading proposals...</div>';
       try {
         currentBlock = Number(await provider.getBlockNumber());
+        document.getElementById('currentBlockDisplay').textContent = currentBlock.toLocaleString();
+
         const filter = govContract.filters.ProposalCreated();
         const events = await govContract.queryFilter(filter, 0, 'latest');
-        if (!events.length) { div.innerHTML = '<p class="loading">No proposals yet.</p>'; return; }
+
+        if (!events.length) {
+          div.innerHTML = `<div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <div class="empty-state-title">No proposals yet</div>
+            <div class="empty-state-desc">Be the first to create a governance proposal below.</div>
+          </div>`;
+          return;
+        }
 
         const cards = await Promise.all(events.map(async e => {
           const propId = e.args.proposalId;
@@ -587,86 +1629,159 @@
           ]);
 
           let hasVoted = false;
+          let userVoteSupport = null;
           if (signerAddr) {
-            try { hasVoted = await govContract.hasVoted(propId, signerAddr); } catch(e) {}
+            try {
+              hasVoted = await govContract.hasVoted(propId, signerAddr);
+            } catch(e) {}
           }
 
-          // Store proposal data for event delegation (avoid onclick injection)
+          // Get voting power at snapshot
+          let votingPowerAtSnapshot = null;
+          if (signerAddr) {
+            try {
+              const snapshot = await govContract.proposalSnapshot(propId);
+              votingPowerAtSnapshot = await tokenContract.getPastVotes(signerAddr, snapshot);
+            } catch(e) {}
+          }
+
           proposalStore[propIdStr] = { targets, values, calldatas, desc, propId };
 
           const st = Number(stateNum);
           const label = STATE_LABELS[st] || 'Unknown';
-          const badge = STATE_BADGES[st] || '';
-          const forV = Number(ethers.formatUnits(votes.forVotes,18)).toLocaleString();
-          const againstV = Number(ethers.formatUnits(votes.againstVotes,18)).toLocaleString();
-          const abstainV = Number(ethers.formatUnits(votes.abstainVotes,18)).toLocaleString();
+          const badgeClass = STATE_BADGE_CLASSES[st] || 'badge-pending';
+          const isActive = st === 1;
 
-          const shortDesc = desc.length > 80 ? desc.slice(0,80)+'…' : desc;
+          const shortDesc = desc.length > 100 ? desc.slice(0, 100) + '…' : desc;
           const targetStr = targets[0] || '(none)';
           const calldataStr = calldatas[0] || '0x';
           const explorerLink = `${net().explorer}/address/${net().GOVERNOR}`;
 
-          let actionsHtml = '';
-          if (st === 1) { // Active
+          const deadlineHtml = (st === 0 || st === 1)
+            ? `<div class="prop-deadline"><span class="prop-deadline-icon">⏱</span> ${deadlineText(deadline)}</div>` : '';
+
+          // Vote section
+          let voteHtml = '';
+          if (st === 1) {
             if (hasVoted) {
-              actionsHtml += `<span class="badge badge-voted">✅ Voted</span>`;
-            } else {
-              actionsHtml += `
-                <div class="vote-reason">
-                  <textarea id="reason_${propIdStr}" placeholder="Optional: reason for your vote..." rows="2"></textarea>
+              voteHtml = `<div class="vote-section">
+                <div class="current-vote-display">✓ You have already voted on this proposal</div>
+              </div>`;
+            } else if (signerAddr) {
+              const vpNote = votingPowerAtSnapshot !== null
+                ? `<div class="vote-power-note">Your voting power at snapshot: ${Number(ethers.formatUnits(votingPowerAtSnapshot, 18)).toLocaleString(undefined, {maximumFractionDigits:0})}</div>` : '';
+              voteHtml = `<div class="vote-section">
+                <div class="vote-section-label">Cast your vote</div>
+                <div class="vote-buttons">
+                  <button class="vote-btn vote-btn-for" data-action="vote" data-propid="${propIdStr}" data-support="1">
+                    <span class="vote-btn-icon">✓</span>
+                    <span>For</span>
+                  </button>
+                  <button class="vote-btn vote-btn-against" data-action="vote" data-propid="${propIdStr}" data-support="0">
+                    <span class="vote-btn-icon">✗</span>
+                    <span>Against</span>
+                  </button>
+                  <button class="vote-btn vote-btn-abstain" data-action="vote" data-propid="${propIdStr}" data-support="2">
+                    <span class="vote-btn-icon">~</span>
+                    <span>Abstain</span>
+                  </button>
                 </div>
-                <button class="btn-success btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="1">✅ For</button>
-                <button class="btn-danger btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="0">❌ Against</button>
-                <button class="btn-secondary btn-sm" data-action="vote" data-propid="${propIdStr}" data-support="2">🤷 Abstain</button>`;
+                ${vpNote}
+                <div class="vote-reason-wrap">
+                  <div class="vote-reason-label">Reason (optional)</div>
+                  <textarea class="vote-reason-input" id="reason_${propIdStr}" placeholder="Why are you voting this way?" rows="2"></textarea>
+                </div>
+              </div>`;
+            } else {
+              voteHtml = `<div class="vote-section">
+                <div style="font-size:13px;color:var(--text-secondary);">Connect wallet to vote</div>
+              </div>`;
             }
-            actionsHtml += `<button class="btn-secondary btn-sm" data-action="cancel" data-propid="${propIdStr}">🚫 Cancel</button>`;
-          }
-          if (st === 4) { // Succeeded
-            actionsHtml += `<button class="btn-success btn-sm" data-action="queue" data-propid="${propIdStr}">📋 Queue</button>`;
-          }
-          if (st === 5) { // Queued
-            actionsHtml += `<button class="btn-success btn-sm" data-action="execute" data-propid="${propIdStr}">🚀 Execute</button>`;
           }
 
-          const deadlineHtml = (st === 1 || st === 0) ? `<div class="prop-deadline">⏱ ${deadlineText(deadline)}</div>` : '';
+          // Action buttons
+          let actionsHtml = '';
+          if (st === 4) {
+            actionsHtml = `<div class="prop-actions">
+              <button class="btn-action-queue" data-action="queue" data-propid="${propIdStr}">📋 Queue for execution</button>
+            </div>`;
+          } else if (st === 5) {
+            actionsHtml = `<div class="prop-actions">
+              <button class="btn-action-execute" data-action="execute" data-propid="${propIdStr}">🚀 Execute</button>
+            </div>`;
+          }
 
-          return `<div class="proposal-card">
-            <div class="prop-header">
-              <span class="badge ${badge}">${label}</span>
-              <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
-            </div>
-            <div class="prop-desc-short" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
-            ${deadlineHtml}
-            <div class="vote-bar">
-              <span class="for">✅ For: ${forV}</span>
-              <span class="against">❌ Against: ${againstV}</span>
-              <span class="abstain">🤷 Abstain: ${abstainV}</span>
-            </div>
-            ${(st === 1) ? quorumBar(votes.forVotes) : ''}
-            <div class="prop-details" id="details_${propIdStr}">
-              <p><strong>Full description:</strong> ${desc}</p>
-              <p><strong>Target:</strong> ${targetStr}</p>
-              <p><strong>Calldata:</strong> ${calldataStr}</p>
-              <p><strong>Proposal ID:</strong> <span class="addr">${propIdStr}</span></p>
-              <p><strong>Deadline block:</strong> ${deadline.toString()}</p>
-            </div>
-            <div class="prop-actions" style="margin-top:12px;">${actionsHtml}</div>
-          </div>`;
+          // Cancel for active
+          let cancelHtml = '';
+          if (st === 1) {
+            cancelHtml = `<button class="btn-action-cancel btn-xs" data-action="cancel" data-propid="${propIdStr}">Cancel</button>`;
+          }
+
+          return {
+            state: st,
+            html: `<div class="proposal-card ${isActive ? 'active-proposal' : ''}" data-state="${st}" data-propid="${propIdStr}">
+              <div class="prop-header">
+                <div class="prop-header-left">
+                  <span class="badge ${badgeClass}"><span class="badge-dot"></span>${label}</span>
+                </div>
+                <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
+              </div>
+              <div class="prop-title" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
+              ${deadlineHtml}
+              ${voteProgressHTML(votes.forVotes, votes.againstVotes, votes.abstainVotes)}
+              ${(st === 1) ? quorumBarHTML(votes.forVotes) : ''}
+              ${voteHtml}
+              ${actionsHtml}
+              <div class="prop-details" id="details_${propIdStr}">
+                <div class="prop-detail-row"><div class="prop-detail-key">Full Description</div><div class="prop-detail-val readable">${desc}</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Target</div><div class="prop-detail-val">${targetStr}</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Calldata</div><div class="prop-detail-val">${calldataStr}</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Proposal ID</div><div class="prop-detail-val">${propIdStr}</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Deadline Block</div><div class="prop-detail-val">${deadline.toString()}</div></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">
+                <button class="btn-toggle-details" data-action="toggle" data-propid="${propIdStr}">Show details ↓</button>
+                ${cancelHtml}
+              </div>
+            </div>`
+          };
         }));
-        div.innerHTML = cards.reverse().join('');
-      } catch(e) { div.innerHTML = `<p class="error">Failed to load proposals: ${e.message}</p>`; }
+
+        // Sort: active first, then by index (most recent first)
+        const sorted = cards.reverse().sort((a, b) => {
+          if (a.state === 1 && b.state !== 1) return -1;
+          if (b.state === 1 && a.state !== 1) return 1;
+          return 0;
+        });
+
+        div.innerHTML = sorted.map(c => c.html).join('');
+
+        // Re-apply active filter
+        if (activeFilter !== 'all') {
+          filterProposals(activeFilter, null);
+        }
+
+      } catch(e) {
+        div.innerHTML = `<div class="error-text">Failed to load proposals: ${e.message}</div>`;
+      }
     }
 
-    // ── Event delegation for proposal buttons ───────────────────────────────
-    document.addEventListener('click', async function(e) {
-      const el = e.target.closest('[data-action]');
+    // ── Event delegation ─────────────────────────────────────────────────────
+    document.addEventListener('click', async function(ev) {
+      const el = ev.target.closest('[data-action]');
       if (!el) return;
       const action = el.dataset.action;
       const propIdStr = el.dataset.propid;
 
       if (action === 'toggle') {
         const details = document.getElementById('details_' + propIdStr);
-        if (details) details.classList.toggle('open');
+        if (details) {
+          details.classList.toggle('open');
+          // Find toggle button and update text
+          document.querySelectorAll(`[data-action="toggle"][data-propid="${propIdStr}"].btn-toggle-details`).forEach(btn => {
+            btn.textContent = details.classList.contains('open') ? 'Hide details ↑' : 'Show details ↓';
+          });
+        }
         return;
       }
 
@@ -674,9 +1789,9 @@
       const p = proposalStore[propIdStr];
       if (!p) return;
 
+      const origHtml = el.innerHTML;
       el.disabled = true;
-      const origText = el.textContent;
-      el.textContent = '⏳...';
+      el.textContent = '⏳ Waiting...';
 
       try {
         if (action === 'vote') {
@@ -691,13 +1806,13 @@
           }
           showTxToast('Vote TX sent', tx.hash);
           await tx.wait();
-          showToast('Vote cast ✅');
+          showToast('Vote cast ✓');
           await loadProposals();
         } else if (action === 'queue') {
           const tx = await govContract.queue(p.targets, p.values, p.calldatas, ethers.id(p.desc));
           showTxToast('Queue TX sent', tx.hash);
           await tx.wait();
-          showToast('Proposal queued ✅');
+          showToast('Proposal queued ✓');
           await loadProposals();
         } else if (action === 'execute') {
           const tx = await govContract.execute(p.targets, p.values, p.calldatas, ethers.id(p.desc));
@@ -715,7 +1830,7 @@
       } catch(err) {
         showToast((action.charAt(0).toUpperCase()+action.slice(1)) + ' failed: ' + (err.reason || err.message));
         el.disabled = false;
-        el.textContent = origText;
+        el.innerHTML = origHtml;
       }
     });
 
@@ -726,22 +1841,33 @@
       const target = document.getElementById('propTarget').value.trim();
       const calldata = document.getElementById('propCalldata').value.trim() || '0x';
       const desc = document.getElementById('propDesc').value.trim();
-      document.getElementById('propError').textContent = '';
-      if (!ethers.isAddress(target)) { document.getElementById('propError').textContent = 'Invalid target address'; return; }
-      if (!desc) { document.getElementById('propError').textContent = 'Description required'; return; }
+      const errEl = document.getElementById('propError');
+      errEl.classList.remove('visible');
+
+      if (!ethers.isAddress(target)) {
+        errEl.textContent = 'Invalid target address';
+        errEl.classList.add('visible');
+        return;
+      }
+      if (!desc) {
+        errEl.textContent = 'Description required';
+        errEl.classList.add('visible');
+        return;
+      }
       const btn = document.getElementById('submitPropBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
       try {
         const tx = await govContract.propose([target],[0n],[calldata],desc);
         showTxToast('Proposal TX sent', tx.hash);
         await tx.wait();
-        showToast('Proposal created ✅');
+        showToast('Proposal created ✓');
         document.getElementById('propTarget').value = '';
         document.getElementById('propCalldata').value = '0x';
         document.getElementById('propDesc').value = '';
         await loadProposals();
       } catch(err) {
-        document.getElementById('propError').textContent = err.reason || err.message;
+        errEl.textContent = err.reason || err.message;
+        errEl.classList.add('visible');
       } finally {
         btn.disabled = false; btn.textContent = 'Submit Proposal';
       }
@@ -753,20 +1879,31 @@
       t.textContent = msg;
       t.style.display = 'block';
       t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 5000);
+      t._timeout = setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(8px)';
+        setTimeout(() => { t.style.display = 'none'; }, 300);
+      }, 5000);
     }
 
     function showTxToast(label, txHash) {
       const t = document.getElementById('toast');
       const url = `${net().explorer}/tx/${txHash}`;
-      t.innerHTML = `${label}: <a href="${url}" target="_blank" class="blockscout-link">${txHash.slice(0,18)}…↗</a>`;
+      t.innerHTML = `${label}: <a href="${url}" target="_blank">${txHash.slice(0,18)}… ↗</a>`;
       t.style.display = 'block';
       t.style.opacity = '1';
+      t.style.transform = 'translateY(0)';
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display='none', 300); }, 8000);
+      t._timeout = setTimeout(() => {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(8px)';
+        setTimeout(() => { t.style.display = 'none'; }, 300);
+      }, 8000);
     }
 
+    // ── Boot ────────────────────────────────────────────────────────────────
     init();
   </script>
 </body>
