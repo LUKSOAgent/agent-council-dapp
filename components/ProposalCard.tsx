@@ -1,5 +1,7 @@
 'use client';
 
+import ReactMarkdown from 'react-markdown';
+
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, usePublicClient } from 'wagmi';
 import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
@@ -203,7 +205,21 @@ export function ProposalCard({
               {title}
             </h3>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-muted)]">
-              {summary || 'No supporting description provided.'}
+              {summary ? (
+                <ReactMarkdown
+                  components={{
+                    h1: ({children}) => <h4 style={{fontSize:'0.85rem',fontWeight:600,color:'var(--text)',marginTop:'0.75rem',marginBottom:'0.25rem'}}>{children}</h4>,
+                    h2: ({children}) => <h4 style={{fontSize:'0.85rem',fontWeight:600,color:'var(--text)',marginTop:'0.75rem',marginBottom:'0.25rem'}}>{children}</h4>,
+                    h3: ({children}) => <h5 style={{fontSize:'0.8rem',fontWeight:600,color:'var(--text)',marginTop:'0.5rem',marginBottom:'0.2rem'}}>{children}</h5>,
+                    p: ({children}) => <p style={{marginBottom:'0.4rem',lineHeight:'1.6'}}>{children}</p>,
+                    strong: ({children}) => <strong style={{color:'var(--text)',fontWeight:600}}>{children}</strong>,
+                    code: ({children}) => <code style={{fontSize:'0.75rem',background:'rgba(255,255,255,0.06)',padding:'0.1em 0.3em',borderRadius:'3px',wordBreak:'break-all'}}>{children}</code>,
+                    a: ({href,children}) => <a href={href} target="_blank" rel="noopener noreferrer" style={{color:'var(--accent)',textDecoration:'underline'}}>{children}</a>,
+                    ul: ({children}) => <ul style={{paddingLeft:'1rem',marginBottom:'0.4rem'}}>{children}</ul>,
+                    li: ({children}) => <li style={{marginBottom:'0.2rem'}}>{children}</li>,
+                  }}
+                >{summary}</ReactMarkdown>
+              ) : 'No supporting description provided.'}
             </p>
           </div>
 
