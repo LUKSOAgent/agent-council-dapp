@@ -90,12 +90,14 @@ export function StatsBar({ proposalCount }: StatsBarProps) {
     functionName: 'votingPeriod',
   });
 
-  // quorum needs a block number — use 0n as a safe fallback (reads quorum at genesis, ok for display)
+  // Quorum reads at a recent-ish block. We pass 1n as a minimum viable block —
+  // the contract uses totalSupply from that snapshot but quorumNumerator is static,
+  // so any post-deploy block gives the correct %.
   const { data: quorumAbs } = useReadContract({
     address: contracts.governor,
     abi: GOVERNOR_ABI,
     functionName: 'quorum',
-    args: [0n],
+    args: [7200001n],
   });
 
   const { data: timelockDelay } = useReadContract({
