@@ -1,13 +1,15 @@
 'use client';
 
 import ReactMarkdown from 'react-markdown';
+import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, usePublicClient } from 'wagmi';
-import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
+import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS, COUNCIL_MEMBER_LIST } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 import { formatVoteAmount, shortenAddress, splitProposalDescription } from '@/lib/format';
 import { VoteButtons } from './VoteButtons';
+import { useLSP3Profile } from '@/hooks/useLSP3Profile';
 
 interface ProposalCardProps {
   proposalId: bigint;
@@ -27,6 +29,37 @@ interface VoteLog {
 
 const SUPPORT_LABELS = ['Against', 'For', 'Abstain'];
 const SUPPORT_COLORS = ['text-red-400', 'text-green-400', 'text-yellow-400'];
+
+// Small avatar for a single voter address
+function VoterAvatar({ address, name }: { address: string; name: string }) {
+  const profile = useLSP3Profile(address);
+  const displayName = profile.name ?? name;
+  return (
+    <div title={displayName} style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, border: '2px solid rgba(255,255,255,0.1)' }}>
+      {profile.avatar ? (
+        <Image src={profile.avatar} alt={displayName} width={28} height={28} style={{ width: 28, height: 28, objectFit: 'cover' }} unoptimized />
+      ) : (
+        <div style={{ width: 28, height: 28, background: 'rgba(254,0,91,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--accent)', fontWeight: 600 }}>
+          {displayName.charAt(0).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Row of voter avatars for a given support type
+function VoterAvatarStrip({ votes, support }: { votes: VoteLog[]; support: number }) {
+  const filtered = votes.filter(v => v.support === support);
+  if (filtered.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+      {filtered.map(v => {
+        const member = COUNCIL_MEMBER_LIST.find(m => m.address.toLowerCase() === v.voter.toLowerCase());
+        return <VoterAvatar key={v.voter} address={v.voter} name={member?.name ?? shortenAddress(v.voter, 4, 3)} />;
+      })}
+    </div>
+  );
+}
 
 function useCountdown(targetBlock: bigint, currentBlock: bigint | undefined) {
   const [timeLeft, setTimeLeft] = useState('');
@@ -270,16 +303,19 @@ export function ProposalCard({
               <span className="summary-label">For</span>
               <strong className="summary-value text-[#22c55e]">{forPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(forVotes)} votes</span>
+              <VoterAvatarStrip votes={votes} support={1} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Against</span>
               <strong className="summary-value text-[var(--danger)]">{againstPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(againstVotes)} votes</span>
+              <VoterAvatarStrip votes={votes} support={0} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Abstain</span>
               <strong className="summary-value text-[var(--warning)]">{abstainPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(abstainVotes)} votes</span>
+              <VoterAvatarStrip votes={votes} support={2} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Quorum</span>
