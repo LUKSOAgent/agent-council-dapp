@@ -28,6 +28,9 @@ export const COUNCIL_MEMBERS: Record<string, string> = {
   '0x1089e1c613db8cb91db72be4818632153e62557a': 'Emmet',
   '0x1e0267b7e88b97d5037e410bdc61d105e04ca02a': 'Leo',
   '0xdb4dad79d8508656c6176408b25bead5d383e450': 'Ampy',
+  // Controller aliases (voted directly instead of via UP — legacy)
+  '0xa1d8703e4e8f54c42d4fbc6a2f76f5be3fc03fc0': 'LUKSOAgent (old ctrl)',
+  '0x7315d3fab45468ca552a3d3eeaf5b5b909987b7b': 'LUKSOAgent (ctrl)',
 };
 
 export const COUNCIL_MEMBER_LIST = [
