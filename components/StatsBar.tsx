@@ -90,14 +90,11 @@ export function StatsBar({ proposalCount }: StatsBarProps) {
     functionName: 'votingPeriod',
   });
 
-  // Quorum reads at a recent-ish block. We pass 1n as a minimum viable block —
-  // the contract uses totalSupply from that snapshot but quorumNumerator is static,
-  // so any post-deploy block gives the correct %.
+  // Use a known block after token deployment where totalSupply was already set
   const { data: quorumAbs } = useReadContract({
     address: contracts.governor,
     abi: GOVERNOR_ABI,
-    functionName: 'quorum',
-    args: [7200001n],
+    functionName: 'quorumNumerator',
   });
 
   const { data: timelockDelay } = useReadContract({
@@ -111,11 +108,8 @@ export function StatsBar({ proposalCount }: StatsBarProps) {
     ? Number(totalSupply / 10n ** 18n).toLocaleString()
     : '—';
 
-  const quorumDisplay = (() => {
-    if (quorumAbs == null || totalSupply == null || totalSupply === 0n) return '—';
-    const pct = Number((quorumAbs * 10000n) / totalSupply) / 100;
-    return `${pct.toFixed(1)}%`;
-  })();
+  // quorumNumerator is the % (e.g. 60 = 60%). quorumDenominator defaults to 100.
+  const quorumDisplay = quorumAbs != null ? `${quorumAbs.toString()}%` : '—';
 
   const votingPeriodDisplay = votingPeriod != null ? blocksToHuman(votingPeriod) : '—';
 

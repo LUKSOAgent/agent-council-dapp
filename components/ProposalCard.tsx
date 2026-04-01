@@ -176,9 +176,14 @@ export function ProposalCard({
   return (
     <div
       id={`proposal-${proposalId}`}
-      className={`glass-card rounded-2xl overflow-hidden transition-all duration-300 ${
-        isHighlighted ? 'ring-1 ring-white/20' : ''
-      }`}
+      className={`rounded-2xl overflow-hidden transition-all duration-300 ${isHighlighted ? 'ring-1 ring-white/20' : ''}`}
+      style={{
+        background: 'rgba(15, 10, 30, 0.85)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+      }}
     >
       <div
         className="p-5 cursor-pointer select-none"

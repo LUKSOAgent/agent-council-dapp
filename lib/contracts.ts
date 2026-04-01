@@ -147,6 +147,13 @@ export const GOVERNOR_ABI = [
     outputs: [{ name: '', type: 'uint256' }],
   },
   {
+    name: 'quorumNumerator',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
     name: 'getVotes',
     type: 'function',
     stateMutability: 'view',
