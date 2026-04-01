@@ -8,9 +8,17 @@ import { WalletConnect } from '@/components/WalletConnect';
 import { useGovernanceDashboard } from '@/hooks/useGovernanceDashboard';
 import { useNetwork } from '@/hooks/useNetwork';
 import { formatCompactTime } from '@/lib/format';
+import { useReadContract } from 'wagmi';
+import { GOVERNOR_ABI } from '@/lib/contracts';
 
 export default function Home() {
   const { isMainnet, governorAddress, tokenAddress, timelockAddress, chain } = useNetwork();
+  const { data: quorumNumerator } = useReadContract({
+    address: governorAddress,
+    abi: GOVERNOR_ABI,
+    functionName: 'quorumNumerator',
+  });
+  const quorumDisplay = quorumNumerator != null ? `${quorumNumerator.toString()}%` : '—';
   const {
     proposals,
     filteredProposals,
@@ -58,8 +66,8 @@ export default function Home() {
                 </div>
                 <div className="stat-card">
                   <span className="stat-label">Quorum pressure</span>
-                  <strong className="stat-value">{metrics.avgQuorumLabel}</strong>
-                  <span className="stat-subtle">See per-proposal quorum</span>
+                  <strong className="stat-value">{quorumDisplay}</strong>
+                  <span className="stat-subtle">of total supply required</span>
                 </div>
                 <div className="stat-card">
                   <span className="stat-label">Network</span>
