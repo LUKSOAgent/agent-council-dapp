@@ -2,7 +2,7 @@
 
 import { useReadContracts } from 'wagmi';
 import { useNetwork } from '@/hooks/useNetwork';
-import { TOKEN_ABI, COUNCIL_MEMBERS_LIST } from '@/lib/contracts';
+import { TOKEN_ABI, COUNCIL_MEMBER_LIST } from '@/lib/contracts';
 
 function shortAddr(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -22,18 +22,18 @@ export function CouncilMembers({ explorerBase = 'https://explorer.lukso.network'
   const { contracts } = useNetwork();
 
   // Build multicall contracts array: [bal0, votes0, bal1, votes1, ...]
-  const contractCalls = COUNCIL_MEMBERS_LIST.flatMap((member) => [
+  const contractCalls = COUNCIL_MEMBER_LIST.flatMap((member) => [
     {
       address: contracts.token,
       abi: TOKEN_ABI,
       functionName: 'balanceOf' as const,
-      args: [member.addr as `0x${string}`],
+      args: [member.address as `0x${string}`],
     },
     {
       address: contracts.token,
       abi: TOKEN_ABI,
       functionName: 'getVotes' as const,
-      args: [member.addr as `0x${string}`],
+      args: [member.address as `0x${string}`],
     },
   ]);
 
@@ -118,7 +118,7 @@ export function CouncilMembers({ explorerBase = 'https://explorer.lukso.network'
       </div>
 
       {/* Member rows */}
-      {COUNCIL_MEMBERS_LIST.map((member, idx) => {
+      {COUNCIL_MEMBER_LIST.map((member, idx) => {
         const balResult = results?.[idx * 2];
         const votesResult = results?.[idx * 2 + 1];
         const balance = balResult?.status === 'success' ? (balResult.result as bigint) : undefined;
@@ -126,13 +126,13 @@ export function CouncilMembers({ explorerBase = 'https://explorer.lukso.network'
 
         return (
           <div
-            key={member.addr}
+            key={member.address}
             style={{
               display: 'grid',
               gridTemplateColumns: '1fr auto',
               gap: '12px',
               padding: '14px 18px',
-              borderBottom: idx < COUNCIL_MEMBERS_LIST.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+              borderBottom: idx < COUNCIL_MEMBER_LIST.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
               alignItems: 'center',
               transition: 'background 0.15s',
             }}
@@ -155,7 +155,7 @@ export function CouncilMembers({ explorerBase = 'https://explorer.lukso.network'
                 {member.name}
               </div>
               <a
-                href={`${explorerBase}/address/${member.addr}`}
+                href={`${explorerBase}/address/${member.address}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -168,7 +168,7 @@ export function CouncilMembers({ explorerBase = 'https://explorer.lukso.network'
                   gap: '3px',
                 }}
               >
-                {shortAddr(member.addr)}
+                {shortAddr(member.address)}
                 <span style={{ fontSize: '10px', opacity: 0.6 }}>↗</span>
               </a>
             </div>

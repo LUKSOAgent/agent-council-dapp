@@ -12,6 +12,16 @@ export const TESTNET_CONTRACTS = {
 
 export const MAINNET_START_BLOCK = 7200000n;
 
+export const TIMELOCK_ABI = [
+  {
+    name: 'getMinDelay',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const;
+
 // Council member addresses (known members)
 export const COUNCIL_MEMBERS: Record<string, string> = {
   '0x293e96ebbf264ed7715cff2b67850517de70232a': 'LUKSOAgent',
@@ -160,6 +170,13 @@ export const GOVERNOR_ABI = [
     type: 'function',
     stateMutability: 'view',
     inputs: [{ name: 'blockNumber', type: 'uint256' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    name: 'quorumNumerator',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
     outputs: [{ name: '', type: 'uint256' }],
   },
   {
