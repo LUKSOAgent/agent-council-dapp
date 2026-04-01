@@ -25,7 +25,6 @@ interface VoteLog {
 
 const SUPPORT_LABELS = ['Against', 'For', 'Abstain'];
 const SUPPORT_COLORS = ['text-red-400', 'text-green-400', 'text-yellow-400'];
-const SUPPORT_BG = ['bg-red-400', 'bg-green-400', 'bg-yellow-400'];
 
 function useCountdown(targetBlock: bigint, currentBlock: bigint | undefined) {
   const [timeLeft, setTimeLeft] = useState('');
@@ -33,27 +32,32 @@ function useCountdown(targetBlock: bigint, currentBlock: bigint | undefined) {
   useEffect(() => {
     if (!currentBlock) return;
 
-    const update = () => {
-      const secondsLeft = Math.max(0, (Number(targetBlock) - Number(currentBlock)) * 5 - Math.floor(Date.now() / 1000) % 5);
-      if (secondsLeft <= 0) {
-        setTimeLeft('Ended');
-        return;
-      }
+    let secondsLeft = Math.max(0, (Number(targetBlock) - Number(currentBlock)) * 5);
 
-      const d = Math.floor(secondsLeft / 86400);
-      const h = Math.floor((secondsLeft % 86400) / 3600);
-      const m = Math.floor((secondsLeft % 3600) / 60);
-      const s = secondsLeft % 60;
-
-      if (d > 0) setTimeLeft(`${d}d ${h}h remaining`);
-      else if (h > 0) setTimeLeft(`${h}h ${m}m remaining`);
-      else if (m > 0) setTimeLeft(`${m}m ${s}s remaining`);
-      else setTimeLeft(`${s}s remaining`);
+    const format = (seconds: number) => {
+      if (seconds <= 0) return 'Ended';
+      const d = Math.floor(seconds / 86400);
+      const h = Math.floor((seconds % 86400) / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (d > 0) return `${d}d ${h}h remaining`;
+      if (h > 0) return `${h}h ${m}m remaining`;
+      if (m > 0) return `${m}m ${s}s remaining`;
+      return `${s}s remaining`;
     };
 
-    update();
-    const interval = setInterval(update, 1000);
-    return () => clearInterval(interval);
+    const render = () => {
+      setTimeLeft(format(secondsLeft));
+      secondsLeft = Math.max(0, secondsLeft - 1);
+    };
+
+    const initial = window.setTimeout(render, 0);
+    const interval = window.setInterval(render, 1000);
+
+    return () => {
+      window.clearTimeout(initial);
+      window.clearInterval(interval);
+    };
   }, [targetBlock, currentBlock]);
 
   return timeLeft;
@@ -67,20 +71,18 @@ export function ProposalCard({
   voteEnd,
   isHighlighted,
 }: ProposalCardProps) {
-  const { governorAddress } = useNetwork();
+  const { governorAddress, isMainnet } = useNetwork();
   const publicClient = usePublicClient();
   const [expanded, setExpanded] = useState(isHighlighted || false);
   const [votes, setVotes] = useState<VoteLog[]>([]);
   const [currentBlock, setCurrentBlock] = useState<bigint>();
   const [quorumVal, setQuorumVal] = useState<bigint>(0n);
 
-  // Fetch current block
   useEffect(() => {
     if (!publicClient) return;
     publicClient.getBlockNumber().then(setCurrentBlock).catch(() => {});
   }, [publicClient]);
 
-  // Fetch quorum at snapshot block
   useEffect(() => {
     if (!publicClient || !voteStart) return;
     publicClient.readContract({
@@ -105,7 +107,6 @@ export function ProposalCard({
     args: [proposalId],
   });
 
-  // Fetch VoteCast logs when expanded
   useEffect(() => {
     if (!expanded || !publicClient) return;
     publicClient.getLogs({
@@ -122,7 +123,9 @@ export function ProposalCard({
         ],
       },
       args: { voter: undefined },
-      fromBlock: voteStart > MAINNET_START_BLOCK ? voteStart : MAINNET_START_BLOCK,
+      fromBlock: isMainnet
+        ? (voteStart > MAINNET_START_BLOCK ? voteStart : MAINNET_START_BLOCK)
+        : voteStart,
       toBlock: 'latest',
     }).then((logs) => {
       const filtered = logs
@@ -141,7 +144,7 @@ export function ProposalCard({
         });
       setVotes(filtered);
     }).catch(() => {});
-  }, [expanded, publicClient, governorAddress, proposalId, voteStart]);
+  }, [expanded, publicClient, governorAddress, proposalId, voteStart, isMainnet]);
 
   const state = typeof stateData === 'number' ? stateData : -1;
   const stateName = state >= 0 ? PROPOSAL_STATES[state] : 'Loading...';
@@ -163,7 +166,6 @@ export function ProposalCard({
   const isActive = state === 1;
   const countdown = useCountdown(voteEnd, currentBlock);
 
-  // Extract title from description (first line)
   const lines = description.split('\n');
   const title = lines[0].replace(/^#+\s*/, '').trim() || `Proposal ${proposalId.toString().slice(-6)}`;
   const body = lines.slice(1).join('\n').trim();
@@ -178,7 +180,6 @@ export function ProposalCard({
         isHighlighted ? 'ring-1 ring-white/20' : ''
       }`}
     >
-      {/* Header */}
       <div
         className="p-5 cursor-pointer select-none"
         onClick={() => setExpanded(!expanded)}
@@ -200,7 +201,6 @@ export function ProposalCard({
           </div>
         </div>
 
-        {/* Vote summary bar */}
         <div className="space-y-1.5">
           <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
             <div
@@ -226,10 +226,8 @@ export function ProposalCard({
         </div>
       </div>
 
-      {/* Expanded content */}
       {expanded && (
         <div className="border-t border-white/5 p-5 space-y-5">
-          {/* Description */}
           {body && (
             <div className="prose-sm">
               <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
@@ -238,7 +236,6 @@ export function ProposalCard({
             </div>
           )}
 
-          {/* Vote breakdown */}
           <div className="space-y-2">
             <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Votes</h4>
             {[
@@ -263,7 +260,6 @@ export function ProposalCard({
             ))}
           </div>
 
-          {/* Quorum progress */}
           <div className="space-y-1.5">
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Quorum progress</span>
@@ -281,7 +277,6 @@ export function ProposalCard({
             </div>
           </div>
 
-          {/* Member votes */}
           {votes.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -308,14 +303,12 @@ export function ProposalCard({
             </div>
           )}
 
-          {/* Vote buttons */}
           {isActive && (
             <div className="border-t border-white/5 pt-4">
               <VoteButtons proposalId={proposalId} onVoted={refetchVotes} />
             </div>
           )}
 
-          {/* Metadata */}
           <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 border-t border-white/5 pt-3">
             <div>Block start: {voteStart.toString()}</div>
             <div>Block end: {voteEnd.toString()}</div>

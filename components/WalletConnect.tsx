@@ -64,12 +64,17 @@ export function WalletConnect() {
   }
 
   return (
-    <button
-      onClick={() => connect({ connector: injected() })}
-      disabled={isPending}
-      className="glass-button px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-all disabled:opacity-50"
-    >
-      {isPending ? 'Connecting...' : 'Connect Wallet'}
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={() => connect({ connector: injected() })}
+        disabled={isPending}
+        className="glass-button px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-all disabled:opacity-50"
+      >
+        {isPending ? 'Connecting...' : 'Connect Wallet'}
+      </button>
+      <p className="text-[11px] text-gray-600">
+        Injected wallet only for now. UP browser extension works.
+      </p>
+    </div>
   );
 }

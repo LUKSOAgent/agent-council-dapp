@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
-import { GOVERNOR_ABI, MAINNET_START_BLOCK } from '@/lib/contracts';
+import { MAINNET_START_BLOCK } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 import { ProposalCard } from '@/components/ProposalCard';
 import { CreateProposalForm } from '@/components/CreateProposalForm';

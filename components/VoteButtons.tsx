@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { GOVERNOR_ABI } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
@@ -46,6 +46,10 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
       enabled: !!txHash,
     },
   });
+
+  useEffect(() => {
+    if (isSuccess) onVoted?.();
+  }, [isSuccess, onVoted]);
 
   const submitVote = (support: number, voteReason: string) => {
     writeContract({

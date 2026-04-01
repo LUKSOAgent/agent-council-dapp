@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { isAddress } from 'viem';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { GOVERNOR_ABI } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 
