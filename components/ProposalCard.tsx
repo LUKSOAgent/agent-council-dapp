@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 import { useState, useEffect } from 'react';
 import { useAccount, useReadContract, usePublicClient } from 'wagmi';
-import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS, COUNCIL_MEMBER_LIST } from '@/lib/contracts';
+import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, COUNCIL_MEMBER_LIST } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 import { formatVoteAmount, shortenAddress, splitProposalDescription } from '@/lib/format';
 import { VoteButtons } from './VoteButtons';
@@ -28,7 +28,19 @@ interface VoteLog {
 }
 
 const SUPPORT_LABELS = ['Against', 'For', 'Abstain'];
-const SUPPORT_COLORS = ['text-red-400', 'text-green-400', 'text-yellow-400'];
+const SUPPORT_COLORS_INLINE = ['#ff6b7a', '#22c55e', '#ffc857'];
+
+// State pill inline styles
+const STATE_PILL_STYLES: Record<number, React.CSSProperties> = {
+  0: { color: '#ffc857', borderColor: 'rgba(255,200,87,0.3)', background: 'rgba(255,200,87,0.1)' },
+  1: { color: '#22c55e', borderColor: 'rgba(34,197,94,0.3)', background: 'rgba(34,197,94,0.1)' },
+  2: { color: '#9ca3af', borderColor: 'rgba(156,163,175,0.3)', background: 'rgba(156,163,175,0.1)' },
+  3: { color: '#ff6b7a', borderColor: 'rgba(255,107,122,0.3)', background: 'rgba(255,107,122,0.1)' },
+  4: { color: '#60a5fa', borderColor: 'rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.1)' },
+  5: { color: '#c084fc', borderColor: 'rgba(192,132,252,0.3)', background: 'rgba(192,132,252,0.1)' },
+  6: { color: '#fb923c', borderColor: 'rgba(251,146,60,0.3)', background: 'rgba(251,146,60,0.2)' },
+  7: { color: '#34d399', borderColor: 'rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.1)' },
+};
 
 // Small avatar for a single voter address
 function VoterAvatar({ address, name }: { address: string; name: string }) {
@@ -192,7 +204,7 @@ export function ProposalCard({
 
   const state = typeof stateData === 'number' ? stateData : -1;
   const stateName = state >= 0 ? PROPOSAL_STATES[state] : 'Loading...';
-  const stateColor = state >= 0 ? PROPOSAL_STATE_COLORS[state] : 'text-gray-400 bg-gray-400/10 border-gray-400/20';
+  const statePillStyle = state >= 0 ? STATE_PILL_STYLES[state] : { color: '#9ca3af', borderColor: 'rgba(156,163,175,0.3)', background: 'rgba(156,163,175,0.1)' };
 
   const againstVotes = proposalVotes ? (proposalVotes as [bigint, bigint, bigint])[0] : 0n;
   const forVotes = proposalVotes ? (proposalVotes as [bigint, bigint, bigint])[1] : 0n;
@@ -216,28 +228,58 @@ export function ProposalCard({
     ? ''
     : `${window.location.origin}${window.location.pathname}?proposal=${proposalId.toString()}`;
 
+  // Find how connected wallet voted from logs
+  const myVote = address
+    ? votes.find((v) => v.voter.toLowerCase() === address.toLowerCase())
+    : undefined;
+
+  const pillBase: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    borderRadius: '999px',
+    border: '1px solid',
+    padding: '6px 10px',
+    fontSize: '11px',
+    fontWeight: 600,
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+  };
+
   return (
     <div
       id={`proposal-${proposalId}`}
-      className={`proposal-card transition-all duration-300 ${
-        isHighlighted ? 'ring-1 ring-[var(--accent)] shadow-[0_0_0_1px_rgba(254,0,91,0.3),0_25px_70px_rgba(0,0,0,0.45)]' : ''
-      }`}
+      className="proposal-card"
+      style={{
+        transition: 'all 0.3s',
+        ...(isHighlighted ? {
+          outline: '1px solid rgba(254,0,91,0.45)',
+          boxShadow: '0 0 0 1px rgba(254,0,91,0.3), 0 25px 70px rgba(0,0,0,0.45)',
+        } : {}),
+      }}
     >
       <div
-        className="cursor-pointer select-none p-6"
+        style={{ cursor: 'pointer', userSelect: 'none', padding: '24px' }}
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="mb-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className={`state-pill ${stateColor}`}>{stateName}</span>
-              {isActive && countdown && <span className="countdown-pill">{countdown}</span>}
-              <span className="meta-pill">#{proposalId.toString().slice(-6)}</span>
+        {/* Header: title + detail panel */}
+        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Left: title area */}
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ marginBottom: '12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+              <span style={{ ...pillBase, ...statePillStyle }}>{stateName}</span>
+              {isActive && countdown && (
+                <span style={{ ...pillBase, background: 'rgba(255,255,255,0.05)', color: 'rgba(245,245,245,0.7)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                  {countdown}
+                </span>
+              )}
+              <span style={{ ...pillBase, background: 'rgba(255,255,255,0.05)', color: 'rgba(245,245,245,0.7)', borderColor: 'rgba(255,255,255,0.08)' }}>
+                #{proposalId.toString().slice(-6)}
+              </span>
             </div>
-            <h3 className="text-xl font-semibold leading-tight text-white sm:text-2xl">
+            <h3 style={{ fontSize: 'clamp(1.1rem, 2vw, 1.4rem)', fontWeight: 600, lineHeight: '1.2', color: 'white', margin: '0 0 12px 0' }}>
               {title}
             </h3>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-muted)]">
+            <p style={{ fontSize: '14px', lineHeight: '1.7', color: 'var(--text-muted)', maxWidth: '640px', margin: 0 }}>
               {summary ? (
                 <ReactMarkdown
                   components={{
@@ -256,70 +298,63 @@ export function ProposalCard({
             </p>
           </div>
 
-          <div className="grid min-w-[220px] gap-3 rounded-[24px] border border-white/10 bg-black/20 p-4">
+          {/* Right: detail info panel */}
+          <div style={{ minWidth: '220px', display: 'grid', gap: '12px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)', padding: '16px' }}>
             <div>
-              <span className="detail-label">Proposer</span>
-              <p className="detail-value">{shortenAddress(proposer)}</p>
+              <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>Proposer</span>
+              <p style={{ display: 'block', marginTop: '6px', color: 'white', wordBreak: 'break-word', margin: '6px 0 0 0' }}>{shortenAddress(proposer)}</p>
             </div>
             {isActive && isConnected && (
               <div>
-                <span className="detail-label">Wallet status</span>
-                <p className="detail-value">
+                <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>Wallet status</span>
+                <p style={{ display: 'block', marginTop: '6px', color: 'white', margin: '6px 0 0 0' }}>
                   {isCheckingHasVoted ? 'Checking vote...' : hasVoted ? 'Already voted' : 'Vote available'}
                 </p>
               </div>
             )}
             <div>
-              <span className="detail-label">Window</span>
-              <p className="detail-value">
+              <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>Window</span>
+              <p style={{ display: 'block', marginTop: '6px', color: 'white', margin: '6px 0 0 0' }}>
                 {voteStart.toString()} to {voteEnd.toString()}
               </p>
             </div>
-            <div className="flex items-center justify-between text-xs text-[var(--text-soft)]">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-soft)' }}>
               <span>{expanded ? 'Collapse details' : 'Expand details'}</span>
               <span>{expanded ? '▲' : '▼'}</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
+        {/* Vote strip + summary tiles */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div className="vote-strip">
-            <div
-              className="bg-[#22c55e] transition-all duration-500"
-              style={{ width: `${forPct}%` }}
-            />
-            <div
-              className="bg-[var(--danger)] transition-all duration-500"
-              style={{ width: `${againstPct}%` }}
-            />
-            <div
-              className="bg-[var(--warning)] transition-all duration-500"
-              style={{ width: `${abstainPct}%` }}
-            />
+            <div style={{ width: `${forPct}%`, background: '#22c55e', transition: 'width 500ms' }} />
+            <div style={{ width: `${againstPct}%`, background: 'var(--danger)', transition: 'width 500ms' }} />
+            <div style={{ width: `${abstainPct}%`, background: 'var(--warning)', transition: 'width 500ms' }} />
           </div>
 
           <div className="summary-grid">
             <div className="summary-tile">
               <span className="summary-label">For</span>
-              <strong className="summary-value text-[#22c55e]">{forPct.toFixed(1)}%</strong>
+              <strong className="summary-value" style={{ color: '#22c55e' }}>{forPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(forVotes)} votes</span>
               <VoterAvatarStrip votes={votes} support={1} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Against</span>
-              <strong className="summary-value text-[var(--danger)]">{againstPct.toFixed(1)}%</strong>
+              <strong className="summary-value" style={{ color: 'var(--danger)' }}>{againstPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(againstVotes)} votes</span>
               <VoterAvatarStrip votes={votes} support={0} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Abstain</span>
-              <strong className="summary-value text-[var(--warning)]">{abstainPct.toFixed(1)}%</strong>
+              <strong className="summary-value" style={{ color: 'var(--warning)' }}>{abstainPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(abstainVotes)} votes</span>
               <VoterAvatarStrip votes={votes} support={2} />
             </div>
             <div className="summary-tile">
               <span className="summary-label">Quorum</span>
-              <strong className="summary-value text-white">{quorumPct.toFixed(0)}%</strong>
+              <strong className="summary-value" style={{ color: 'white' }}>{quorumPct.toFixed(0)}%</strong>
               <span className="summary-subtle">{quorumPct >= 100 ? 'Reached' : 'In progress'}</span>
             </div>
           </div>
@@ -327,54 +362,58 @@ export function ProposalCard({
       </div>
 
       {expanded && (
-        <div className="border-t border-white/10 p-6 pt-0">
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', padding: '0 24px 24px 24px' }}>
           <div className="detail-grid">
+            {/* Vote table */}
             <section className="detail-panel">
               <div className="detail-panel-header">
-                <h4 className="detail-panel-title">Vote table</h4>
-                <span className="detail-panel-copy">Current on-chain weight</span>
+                <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'white', margin: 0 }}>Vote table</h4>
+                <span style={{ fontSize: '13px', color: 'var(--text-soft)' }}>Current on-chain weight</span>
               </div>
 
               <div className="vote-table">
                 {[
-                  { label: 'For', value: forVotes, pct: forPct, color: 'bg-[#22c55e]', text: 'text-[#22c55e]' },
-                  { label: 'Against', value: againstVotes, pct: againstPct, color: 'bg-[var(--danger)]', text: 'text-[var(--danger)]' },
-                  { label: 'Abstain', value: abstainVotes, pct: abstainPct, color: 'bg-[var(--warning)]', text: 'text-[var(--warning)]' },
-                ].map(({ label, value, pct, color, text }) => (
+                  { label: 'For', value: forVotes, pct: forPct, barColor: '#22c55e', textColor: '#22c55e' },
+                  { label: 'Against', value: againstVotes, pct: againstPct, barColor: 'var(--danger)', textColor: 'var(--danger)' },
+                  { label: 'Abstain', value: abstainVotes, pct: abstainPct, barColor: 'var(--warning)', textColor: 'var(--warning)' },
+                ].map(({ label, value, pct, barColor, textColor }) => (
                   <div key={label} className="vote-row">
-                    <div className="flex items-center justify-between gap-4">
-                      <span className={`text-sm font-medium ${text}`}>{label}</span>
-                      <span className="text-sm text-[var(--text-soft)]">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 500, color: textColor }}>{label}</span>
+                      <span style={{ fontSize: '14px', color: 'var(--text-soft)' }}>
                         {formatVoteAmount(value)} votes, {pct.toFixed(1)}%
                       </span>
                     </div>
                     <div className="vote-row-track">
-                      <div className={`vote-row-fill ${color}`} style={{ width: `${pct}%` }} />
+                      <div className="vote-row-fill" style={{ width: `${pct}%`, background: barColor }} />
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="quorum-panel">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="detail-label">Quorum progress</span>
-                  <span className={`text-sm font-medium ${quorumPct >= 100 ? 'text-[#22c55e]' : 'text-white'}`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                  <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>
+                    Quorum progress
+                  </span>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: quorumPct >= 100 ? '#22c55e' : 'white' }}>
                     {quorumPct.toFixed(0)}%
                   </span>
                 </div>
                 <div className="vote-row-track">
                   <div
-                    className={`vote-row-fill ${quorumPct >= 100 ? 'bg-[#22c55e]' : 'bg-white'}`}
-                    style={{ width: `${Math.min(quorumPct, 100)}%` }}
+                    className="vote-row-fill"
+                    style={{ width: `${Math.min(quorumPct, 100)}%`, background: quorumPct >= 100 ? '#22c55e' : 'white' }}
                   />
                 </div>
               </div>
             </section>
 
+            {/* Council breakdown */}
             <section className="detail-panel">
               <div className="detail-panel-header">
-                <h4 className="detail-panel-title">Council breakdown</h4>
-                <span className="detail-panel-copy">{votes.length} recorded vote{votes.length !== 1 ? 's' : ''}</span>
+                <h4 style={{ fontSize: '14px', fontWeight: 600, color: 'white', margin: 0 }}>Council breakdown</h4>
+                <span style={{ fontSize: '13px', color: 'var(--text-soft)' }}>{votes.length} recorded vote{votes.length !== 1 ? 's' : ''}</span>
               </div>
 
               {votes.length > 0 ? (
@@ -382,15 +421,15 @@ export function ProposalCard({
                   {votes.map((vote, index) => (
                     <div key={`${vote.voter}-${index}`} className="breakdown-row">
                       <div>
-                        <p className="text-sm font-medium text-white">{formatVoter(vote.voter)}</p>
-                        <p className={`mt-1 text-xs ${SUPPORT_COLORS[vote.support] || 'text-[var(--text-soft)]'}`}>
+                        <p style={{ fontSize: '14px', fontWeight: 500, color: 'white', margin: 0 }}>{formatVoter(vote.voter)}</p>
+                        <p style={{ marginTop: '4px', fontSize: '12px', color: SUPPORT_COLORS_INLINE[vote.support] || 'var(--text-soft)', margin: '4px 0 0 0' }}>
                           {SUPPORT_LABELS[vote.support] || 'Unknown'}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-white">{formatVoteAmount(vote.weight, 1)}</p>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '14px', color: 'white', margin: 0 }}>{formatVoteAmount(vote.weight, 1)}</p>
                         {vote.reason && (
-                          <p className="mt-1 max-w-[16rem] text-xs italic leading-5 text-[var(--text-soft)]">
+                          <p style={{ marginTop: '4px', maxWidth: '256px', fontSize: '12px', fontStyle: 'italic', lineHeight: '1.5', color: 'var(--text-soft)', margin: '4px 0 0 0' }}>
                             &ldquo;{vote.reason}&rdquo;
                           </p>
                         )}
@@ -406,28 +445,59 @@ export function ProposalCard({
             </section>
           </div>
 
+          {/* Vote actions */}
           {isActive && (
-            <div className="mt-6">
-              <VoteButtons proposalId={proposalId} onVoted={refetchVotes} />
+            <div style={{ marginTop: '24px' }}>
+              {hasVoted ? (
+                <div style={{
+                  borderRadius: '22px',
+                  border: '1px solid rgba(254,0,91,0.3)',
+                  background: 'rgba(254,0,91,0.1)',
+                  padding: '16px',
+                  textAlign: 'center',
+                }}>
+                  <span style={{ fontSize: '14px', color: 'var(--accent)' }}>
+                    {myVote !== undefined
+                      ? `You voted — ${SUPPORT_LABELS[myVote.support]}`
+                      : 'This wallet already voted on this proposal.'}
+                  </span>
+                </div>
+              ) : (
+                <VoteButtons proposalId={proposalId} onVoted={refetchVotes} />
+              )}
             </div>
           )}
 
+          {/* Metadata */}
           <div className="meta-bar">
             <div>
-              <span className="detail-label">Proposal ID</span>
-              <p className="detail-value">{proposalId.toString()}</p>
+              <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>
+                Proposal ID
+              </span>
+              <p style={{ display: 'block', marginTop: '6px', color: 'white', wordBreak: 'break-word', margin: '6px 0 0 0' }}>
+                {proposalId.toString()}
+              </p>
             </div>
             <div>
-              <span className="detail-label">Vote start</span>
-              <p className="detail-value">{voteStart.toString()}</p>
+              <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>
+                Vote start
+              </span>
+              <p style={{ display: 'block', marginTop: '6px', color: 'white', margin: '6px 0 0 0' }}>
+                {voteStart.toString()}
+              </p>
             </div>
             <div>
-              <span className="detail-label">Vote end</span>
-              <p className="detail-value">{voteEnd.toString()}</p>
+              <span style={{ display: 'inline-block', fontSize: '11px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-soft)' }}>
+                Vote end
+              </span>
+              <p style={{ display: 'block', marginTop: '6px', color: 'white', margin: '6px 0 0 0' }}>
+                {voteEnd.toString()}
+              </p>
             </div>
             <button
               onClick={() => navigator.clipboard.writeText(proposalUrl).catch(() => {})}
-              className="control-button justify-self-start lg:justify-self-end"
+              className="control-button"
+              style={{ justifySelf: 'start' }}
             >
               Copy link
             </button>

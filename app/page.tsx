@@ -33,26 +33,64 @@ export default function Home() {
   } = useGovernanceDashboard();
 
   return (
-    <div className="min-h-screen bg-canvas text-white">
+    <div style={{ minHeight: '100vh' }} className="bg-canvas">
       <div className="page-shell">
         <header className="hero-panel">
           <div className="hero-grid">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/65">
-                <span className="h-2 w-2 rounded-full bg-[var(--accent)] shadow-[0_0_18px_rgba(254,0,91,0.85)]" />
+            {/* Left: title + stats */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              {/* Badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '12px',
+                borderRadius: '999px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'rgba(255,255,255,0.05)',
+                padding: '8px 16px',
+                fontSize: '11px',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.28em',
+                color: 'rgba(255,255,255,0.65)',
+                width: 'fit-content',
+              }}>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: 'var(--accent)',
+                  boxShadow: '0 0 18px rgba(254,0,91,0.85)',
+                  flexShrink: 0,
+                }} />
                 Agent Council Governance
               </div>
 
-              <div className="space-y-4">
-                <h1 className="max-w-4xl text-4xl font-semibold leading-[0.94] text-white sm:text-5xl lg:text-6xl">
+              {/* Heading */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h1 style={{
+                  maxWidth: '900px',
+                  fontSize: 'clamp(2rem, 4vw, 3.75rem)',
+                  fontWeight: 600,
+                  lineHeight: '0.94',
+                  color: 'white',
+                  margin: 0,
+                }}>
                   Premium control room for proposals, votes, and council state.
                 </h1>
-                <p className="max-w-2xl text-sm leading-7 text-[var(--text-muted)] sm:text-base">
+                <p style={{
+                  maxWidth: '640px',
+                  fontSize: 'clamp(0.875rem, 1.5vw, 1rem)',
+                  lineHeight: '1.75',
+                  color: 'var(--text-muted)',
+                  margin: 0,
+                }}>
                   Dark, sharp, and operational. Review active mandates, inspect quorum pressure,
                   and vote without swimming through cramped cards and weak contrast.
                 </p>
               </div>
 
+              {/* Stats grid */}
               <div className="stats-grid">
                 <div className="stat-card">
                   <span className="stat-label">Proposals tracked</span>
@@ -77,28 +115,33 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Right: command panel */}
             <aside className="command-panel">
               <div className="panel-block">
                 <div className="panel-heading">
                   <span className="panel-kicker">Council status</span>
                   <span className="status-chip">{isMainnet ? 'Mainnet' : 'Testnet'}</span>
                 </div>
-                <div className="space-y-4">
-                  <div className="flex flex-wrap items-center gap-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
                     <NetworkSwitcher />
                     <WalletConnect />
                   </div>
                   <div className="address-grid">
-                    {[{label:'Governor',addr:governorAddress},{label:'Token',addr:tokenAddress},{label:'Timelock',addr:timelockAddress}].map(({label,addr})=>(
+                    {[
+                      { label: 'Governor', addr: governorAddress },
+                      { label: 'Token', addr: tokenAddress },
+                      { label: 'Timelock', addr: timelockAddress },
+                    ].map(({ label, addr }) => (
                       <div key={label}>
                         <span className="address-label">{label}</span>
                         <a
-                          href={`https://explorer.execution.${isMainnet?'mainnet':'testnet'}.lukso.network/address/${addr}`}
+                          href={`https://explorer.execution.${isMainnet ? 'mainnet' : 'testnet'}.lukso.network/address/${addr}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          style={{display:'block',color:'var(--accent)',textDecoration:'none'}}
-                          onMouseEnter={e=>(e.currentTarget.style.textDecoration='underline')}
-                          onMouseLeave={e=>(e.currentTarget.style.textDecoration='none')}
+                          style={{ display: 'block', color: 'var(--accent)', textDecoration: 'none' }}
+                          onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                          onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
                         >
                           <code className="address-value">{addr}</code>
                         </a>
@@ -119,8 +162,10 @@ export default function Home() {
                     {loading ? 'Refreshing' : 'Refresh'}
                   </button>
                 </div>
-                <label className="space-y-2">
-                  <span className="text-xs uppercase tracking-[0.22em] text-white/40">Search</span>
+                <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <span style={{ fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.22em', color: 'rgba(255,255,255,0.4)' }}>
+                    Search
+                  </span>
                   <input
                     type="text"
                     value={search}
@@ -129,7 +174,7 @@ export default function Home() {
                     className="field-input"
                   />
                 </label>
-                <div className="flex items-center justify-between text-xs text-[var(--text-soft)]">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-soft)' }}>
                   <span>
                     {filteredProposals.length} result{filteredProposals.length !== 1 ? 's' : ''}
                   </span>
@@ -143,6 +188,7 @@ export default function Home() {
         </header>
 
         <main className="content-grid">
+          {/* Proposals section */}
           <section className="surface-panel">
             <div className="section-header">
               <div>
@@ -156,15 +202,18 @@ export default function Home() {
 
             {error && (
               <div className="alert-panel">
-                <p className="text-sm text-red-200">{error}</p>
-                <button onClick={loadProposals} className="text-sm font-medium text-red-100 underline underline-offset-4">
+                <p style={{ fontSize: '14px', color: '#fecaca', margin: 0 }}>{error}</p>
+                <button
+                  onClick={loadProposals}
+                  style={{ fontSize: '14px', fontWeight: 500, color: '#fee2e2', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
                   Retry sync
                 </button>
               </div>
             )}
 
             {loading && proposals.length === 0 && (
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {[1, 2, 3].map((key) => (
                   <div key={key} className="proposal-skeleton" />
                 ))}
@@ -173,8 +222,8 @@ export default function Home() {
 
             {!loading && filteredProposals.length === 0 && !error && (
               <div className="empty-panel">
-                <h3 className="text-xl font-medium text-white">No proposals matched.</h3>
-                <p className="max-w-md text-sm leading-7 text-[var(--text-muted)]">
+                <h3 style={{ fontSize: '20px', fontWeight: 500, color: 'white', margin: 0 }}>No proposals matched.</h3>
+                <p style={{ maxWidth: '448px', fontSize: '14px', lineHeight: '1.75', color: 'var(--text-muted)', margin: 0 }}>
                   Try a different search term or refresh if a new proposal landed recently.
                 </p>
               </div>
@@ -195,6 +244,7 @@ export default function Home() {
             </div>
           </section>
 
+          {/* Sidebar */}
           <aside className="sidebar-stack">
             <MemberPanel />
 
@@ -208,15 +258,15 @@ export default function Home() {
               <div className="insight-list">
                 <div className="insight-row">
                   <span className="insight-label">Density</span>
-                  <p>Single-column sprawl replaced with a real dashboard split and clear action zones.</p>
+                  <p style={{ margin: 0 }}>Single-column sprawl replaced with a real dashboard split and clear action zones.</p>
                 </div>
                 <div className="insight-row">
                   <span className="insight-label">Hierarchy</span>
-                  <p>Titles, metadata, state, quorum, and voting actions now compete less and read faster.</p>
+                  <p style={{ margin: 0 }}>Titles, metadata, state, quorum, and voting actions now compete less and read faster.</p>
                 </div>
                 <div className="insight-row">
                   <span className="insight-label">Maintainability</span>
-                  <p>Proposal loading moved out of the page shell and formatting logic is centralized.</p>
+                  <p style={{ margin: 0 }}>Proposal loading moved out of the page shell and formatting logic is centralized.</p>
                 </div>
               </div>
             </section>
