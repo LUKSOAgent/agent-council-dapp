@@ -54,14 +54,12 @@ export default function Home() {
                 <div className="stat-card">
                   <span className="stat-label">Active now</span>
                   <strong className="stat-value">{metrics.active}</strong>
-                  <span className="stat-subtle">
-                    {metrics.ended} closed, {metrics.succeeded} succeeded
-                  </span>
+                  <span className="stat-subtle">State shown per proposal card</span>
                 </div>
                 <div className="stat-card">
                   <span className="stat-label">Quorum pressure</span>
                   <strong className="stat-value">{metrics.avgQuorumLabel}</strong>
-                  <span className="stat-subtle">Average visible quorum progress</span>
+                  <span className="stat-subtle">See per-proposal quorum</span>
                 </div>
                 <div className="stat-card">
                   <span className="stat-label">Network</span>

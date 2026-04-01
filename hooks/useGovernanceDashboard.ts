@@ -111,24 +111,21 @@ export function useGovernanceDashboard() {
   }, [proposals, search]);
 
   const metrics = useMemo(() => {
-    const now = Date.now();
-    const active = proposals.filter((proposal) => Number(proposal.voteEnd) * 5000 > now).length;
-    const ended = Math.max(0, proposals.length - active);
-    const succeeded = ended;
-    const avgQuorum = proposals.length
-      ? Math.round(
-          proposals.reduce((total, proposal) => total + Number(proposal.voteEnd - proposal.voteStart), 0) /
-            proposals.length /
-            100
-        )
-      : 0;
+    // state: 0=Pending, 1=Active, 2=Canceled, 3=Defeated, 4=Succeeded, 5=Queued, 6=Expired, 7=Executed
+    // We don't have state in proposals here, so use voteEnd vs currentBlock
+    // For display: count proposals with no definitive end state as "active"
+    const total = proposals.length;
+    // Without on-chain state, approximate: proposals where voteEnd is recent (last 50400 blocks ~1 week)
+    // Just show total/ended/succeeded as approximations
+    const ended = 0; // can't know without state
+    const succeeded = 0; // can't know without state
 
     return {
-      total: proposals.length,
-      active,
+      total,
+      active: total, // show all tracked as potentially active; state shown per-card
       ended,
       succeeded,
-      avgQuorumLabel: `${avgQuorum}%`,
+      avgQuorumLabel: '—',
     };
   }, [proposals]);
 
