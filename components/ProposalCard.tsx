@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useReadContract, usePublicClient } from 'wagmi';
 import { formatEther } from 'viem';
-import { GOVERNOR_ABI, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
+import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 import { VoteButtons } from './VoteButtons';
 
@@ -32,25 +32,28 @@ function useCountdown(targetBlock: bigint, currentBlock: bigint | undefined) {
 
   useEffect(() => {
     if (!currentBlock) return;
-    const blocksLeft = Number(targetBlock) - Number(currentBlock);
-    if (blocksLeft <= 0) {
-      setTimeLeft('Ended');
-      return;
-    }
-    // LUKSO ~5s blocks
-    const secondsLeft = blocksLeft * 5;
 
     const update = () => {
-      const s = Math.max(0, secondsLeft);
-      const d = Math.floor(s / 86400);
-      const h = Math.floor((s % 86400) / 3600);
-      const m = Math.floor((s % 3600) / 60);
+      const secondsLeft = Math.max(0, (Number(targetBlock) - Number(currentBlock)) * 5 - Math.floor(Date.now() / 1000) % 5);
+      if (secondsLeft <= 0) {
+        setTimeLeft('Ended');
+        return;
+      }
+
+      const d = Math.floor(secondsLeft / 86400);
+      const h = Math.floor((secondsLeft % 86400) / 3600);
+      const m = Math.floor((secondsLeft % 3600) / 60);
+      const s = secondsLeft % 60;
+
       if (d > 0) setTimeLeft(`${d}d ${h}h remaining`);
       else if (h > 0) setTimeLeft(`${h}h ${m}m remaining`);
-      else setTimeLeft(`${m}m remaining`);
+      else if (m > 0) setTimeLeft(`${m}m ${s}s remaining`);
+      else setTimeLeft(`${s}s remaining`);
     };
 
     update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
   }, [targetBlock, currentBlock]);
 
   return timeLeft;
@@ -119,7 +122,7 @@ export function ProposalCard({
         ],
       },
       args: { voter: undefined },
-      fromBlock: voteStart,
+      fromBlock: voteStart > MAINNET_START_BLOCK ? voteStart : MAINNET_START_BLOCK,
       toBlock: 'latest',
     }).then((logs) => {
       const filtered = logs
@@ -166,6 +169,7 @@ export function ProposalCard({
   const body = lines.slice(1).join('\n').trim();
 
   const shortProposer = `${proposer.slice(0, 6)}...${proposer.slice(-4)}`;
+  const formatVoter = (voter: string) => COUNCIL_MEMBERS[voter.toLowerCase()] || `${voter.slice(0, 8)}...${voter.slice(-4)}`;
 
   return (
     <div
@@ -290,7 +294,7 @@ export function ProposalCard({
                       {SUPPORT_LABELS[v.support] || '?'}
                     </span>
                     <span className="text-gray-500 font-mono">
-                      {v.voter.slice(0, 8)}...{v.voter.slice(-4)}
+                      {formatVoter(v.voter)}
                     </span>
                     <span className="text-gray-600 ml-auto shrink-0">
                       {parseFloat(formatEther(v.weight)).toFixed(1)}

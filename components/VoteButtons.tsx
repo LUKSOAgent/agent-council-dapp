@@ -47,14 +47,6 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
     },
   });
 
-  const handleVote = (support: number) => {
-    if (!isConnected || hasVoted) return;
-    setSelected(support);
-    if (!showReason) {
-      submitVote(support, '');
-    }
-  };
-
   const submitVote = (support: number, voteReason: string) => {
     writeContract({
       address: governorAddress,

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { isAddress } from 'viem';
 import { GOVERNOR_ABI } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 
@@ -11,6 +12,7 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState('');
   const [targetAddress, setTargetAddress] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   const { writeContract, data: txHash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
@@ -22,7 +24,14 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
     e.preventDefault();
     if (!description.trim()) return;
 
-    const target = (targetAddress.trim() || governorAddress) as `0x${string}`;
+    const rawTarget = targetAddress.trim();
+    if (rawTarget && !isAddress(rawTarget)) {
+      setValidationError('Target address is invalid');
+      return;
+    }
+
+    setValidationError('');
+    const target = (rawTarget || governorAddress) as `0x${string}`;
 
     writeContract({
       address: governorAddress,
@@ -96,11 +105,18 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
             <input
               type="text"
               value={targetAddress}
-              onChange={(e) => setTargetAddress(e.target.value)}
+              onChange={(e) => {
+                setTargetAddress(e.target.value);
+                if (validationError) setValidationError('');
+              }}
               placeholder="0x..."
               className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20 font-mono"
             />
           </div>
+
+          {validationError && (
+            <p className="text-xs text-red-400">{validationError}</p>
+          )}
 
           {error && (
             <p className="text-xs text-red-400">{error.message.split('(')[0].trim()}</p>
@@ -108,7 +124,7 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
 
           <button
             type="submit"
-            disabled={isPending || isConfirming || !description.trim()}
+            disabled={isPending || isConfirming || !description.trim() || !!(targetAddress.trim() && !isAddress(targetAddress.trim()))}
             className="glass-button w-full py-2.5 text-sm font-medium text-white hover:bg-white/10 transition-all disabled:opacity-50"
           >
             {isPending ? 'Submitting...' : isConfirming ? 'Confirming...' : 'Submit Proposal'}
