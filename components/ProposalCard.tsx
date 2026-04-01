@@ -152,7 +152,7 @@ export function ProposalCard({
   });
 
   useEffect(() => {
-    if (!expanded || !publicClient) return;
+    if (!publicClient) return;
     publicClient.getLogs({
       address: governorAddress,
       event: {
