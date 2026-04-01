@@ -83,18 +83,21 @@ export default function Home() {
                     <WalletConnect />
                   </div>
                   <div className="address-grid">
-                    <div>
-                      <span className="address-label">Governor</span>
-                      <code className="address-value">{governorAddress}</code>
-                    </div>
-                    <div>
-                      <span className="address-label">Token</span>
-                      <code className="address-value">{tokenAddress}</code>
-                    </div>
-                    <div>
-                      <span className="address-label">Timelock</span>
-                      <code className="address-value">{timelockAddress}</code>
-                    </div>
+                    {[{label:'Governor',addr:governorAddress},{label:'Token',addr:tokenAddress},{label:'Timelock',addr:timelockAddress}].map(({label,addr})=>(
+                      <div key={label}>
+                        <span className="address-label">{label}</span>
+                        <a
+                          href={`https://explorer.execution.${isMainnet?'mainnet':'testnet'}.lukso.network/address/${addr}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{display:'block',color:'var(--accent)',textDecoration:'none'}}
+                          onMouseEnter={e=>(e.currentTarget.style.textDecoration='underline')}
+                          onMouseLeave={e=>(e.currentTarget.style.textDecoration='none')}
+                        >
+                          <code className="address-value">{addr}</code>
+                        </a>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
