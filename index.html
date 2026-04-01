@@ -1108,6 +1108,127 @@
       font-weight: 600;
     }
 
+    .current-vote-display.voted-for {
+      background: rgba(48, 209, 88, 0.08);
+      border-color: rgba(48, 209, 88, 0.25);
+      color: var(--success);
+    }
+    .current-vote-display.voted-against {
+      background: rgba(255, 69, 58, 0.08);
+      border-color: rgba(255, 69, 58, 0.25);
+      color: var(--danger);
+    }
+    .current-vote-display.voted-abstain {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.12);
+      color: var(--text-secondary);
+    }
+
+    /* ── Member votes list ── */
+    .member-votes-list {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .member-votes-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+    }
+
+    .member-vote-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .member-vote-row:last-child { border-bottom: none; }
+
+    .member-vote-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .member-vote-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 100px;
+    }
+
+    .member-vote-for {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(48, 209, 88, 0.25);
+    }
+
+    .member-vote-against {
+      background: rgba(255, 69, 58, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 69, 58, 0.25);
+    }
+
+    .member-vote-abstain {
+      background: rgba(255,255,255,0.06);
+      color: var(--text-secondary);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .member-vote-pending {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    /* ── Voting starts banner ── */
+    .voting-starts-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 159, 10, 0.08);
+      border: 1px solid rgba(255, 159, 10, 0.2);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12px;
+      color: var(--warning);
+      margin-bottom: 12px;
+    }
+
+    /* ── Clawback countdown ── */
+    .clawback-countdown {
+      font-size: 10px;
+      color: rgba(255, 159, 10, 0.65);
+      margin-top: 2px;
+    }
+
+    /* ── Auto-refresh indicator ── */
+    .refresh-indicator {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .refresh-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--success);
+      opacity: 0.5;
+    }
+
+    .refresh-dot.pulsing {
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
     /* ── Mobile adjustments ── */
     @media (max-width: 479px) {
       .header-logo h1 { font-size: 16px; }
@@ -1178,7 +1299,7 @@
       <div class="stat-card">
         <div class="stat-label">Current Block</div>
         <div class="stat-value" id="currentBlockDisplay">—</div>
-        <div class="stat-sub">LUKSO chain</div>
+        <div class="stat-sub" style="display:flex;align-items:center;gap:5px;">LUKSO chain <span class="refresh-indicator"><span class="refresh-dot" id="refreshDot"></span><span id="refreshCountdown"></span></span></div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Your Power</div>
@@ -1299,6 +1420,10 @@
     ];
 
     const BLOCKS_PER_SEC = 6;
+    const AUTO_REFRESH_INTERVAL = 30000; // 30 seconds
+    let autoRefreshTimer = null;
+    let refreshCountdownTimer = null;
+    let nextRefreshAt = 0;
 
     const GOV_ABI = [
       'function propose(address[],uint256[],bytes[],string) returns (uint256)',
@@ -1354,7 +1479,7 @@
       document.getElementById('delegationBanner').style.display = 'none';
       document.getElementById('statVotePower').textContent = '—';
       document.getElementById('statTokenBalance').textContent = 'connect wallet';
-      init();
+      init().then(() => startAutoRefresh());
     }
 
     function net() { return NETWORKS[currentNetwork]; }
@@ -1491,11 +1616,14 @@
           ]);
           const balFmt = Number(ethers.formatUnits(bal,18)).toLocaleString(undefined, {maximumFractionDigits:0});
           const votesFmt = Number(ethers.formatUnits(votes,18)).toLocaleString(undefined, {maximumFractionDigits:0});
+          const countdown = a.note ? clawbackCountdown(a.note) : '';
+          const countdownHtml = countdown ? `<div class="clawback-countdown">⏳ clawback: ${countdown}</div>` : '';
           const noteHtml = a.note ? `<span class="badge badge-clawback">${a.note}</span>` : '';
           const explorerLink = `${net().explorer}/address/${a.addr}`;
           return `<div class="members-row">
             <div class="member-info">
-              <div class="member-name">${a.name}${noteHtml}</div>
+              <div class="member-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${a.name}${noteHtml}</div>
+              ${countdownHtml}
               <a href="${explorerLink}" target="_blank" class="blockscout-link">
                 <span class="member-addr">${a.addr.slice(0,8)}…${a.addr.slice(-6)}</span> ↗
               </a>
@@ -1686,12 +1814,23 @@
 
           // Get voting power at snapshot
           let votingPowerAtSnapshot = null;
-          if (signerAddr) {
-            try {
-              const snapshot = await govContract.proposalSnapshot(propId);
-              votingPowerAtSnapshot = await tokenContract.getPastVotes(signerAddr, snapshot);
-            } catch(e) {}
-          }
+          let snapshotBlock = null;
+          try {
+            snapshotBlock = await govContract.proposalSnapshot(propId);
+            if (signerAddr) {
+              votingPowerAtSnapshot = await tokenContract.getPastVotes(signerAddr, snapshotBlock);
+            }
+          } catch(e) {}
+
+          // Fetch member votes via VoteCast events for this proposal
+          let memberVotesMap = {};
+          try {
+            const vcFilter = govContract.filters.VoteCast(null, propId);
+            const vcEvents = await govContract.queryFilter(vcFilter, 0, 'latest');
+            vcEvents.forEach(ev => {
+              memberVotesMap[ev.args.voter.toLowerCase()] = Number(ev.args.support);
+            });
+          } catch(e) {}
 
           proposalStore[propIdStr] = { targets, values, calldatas, desc, propId };
 
@@ -1703,11 +1842,50 @@
           const VOTE_LABELS = ['Against', 'For', 'Abstain'];
           const VOTE_COLORS = ['var(--danger)', 'var(--success)', 'var(--text-secondary)'];
           const VOTE_ICONS  = ['✗', '✓', '~'];
+          const VOTE_BADGE_CLASSES = ['voted-against', 'voted-for', 'voted-abstain'];
           const hasVotedBadge = hasVoted
             ? (userVoteSupport !== null
                 ? `<span class="badge badge-voted">${VOTE_ICONS[userVoteSupport]} Voted ${VOTE_LABELS[userVoteSupport]}</span>`
                 : `<span class="badge badge-voted">✓ Voted</span>`)
             : '';
+
+          // Voting starts banner for Pending
+          const snapshotBlockNum = snapshotBlock ? Number(snapshotBlock) : null;
+          const pendingBanner = (st === 0 && snapshotBlockNum)
+            ? (() => {
+                const blocksUntilVoting = snapshotBlockNum - currentBlock;
+                if (blocksUntilVoting > 0) {
+                  const secsLeft = blocksUntilVoting * BLOCKS_PER_SEC;
+                  const humanTime = secsLeft < 120 ? `~${secsLeft}s` : secsLeft < 7200 ? `~${Math.round(secsLeft/60)} min` : `~${Math.round(secsLeft/3600)}h`;
+                  return `<div class="voting-starts-banner">⏳ Voting opens in ${humanTime} (block ${snapshotBlockNum.toLocaleString()})</div>`;
+                }
+                return '';
+              })()
+            : '';
+
+          // Member votes breakdown
+          const memberVotesHtml = (() => {
+            const rows = AGENTS.map(a => {
+              const support = memberVotesMap[a.addr.toLowerCase()];
+              let voteBadge;
+              if (support === undefined) {
+                voteBadge = `<span class="member-vote-pending">not voted</span>`;
+              } else {
+                const cls = ['member-vote-against', 'member-vote-for', 'member-vote-abstain'][support];
+                const icon = VOTE_ICONS[support];
+                const lbl = VOTE_LABELS[support];
+                voteBadge = `<span class="member-vote-badge ${cls}">${icon} ${lbl}</span>`;
+              }
+              return `<div class="member-vote-row">
+                <span class="member-vote-name">${a.name}</span>
+                ${voteBadge}
+              </div>`;
+            }).join('');
+            return `<div class="member-votes-list">
+              <div class="member-votes-title">Council Votes</div>
+              ${rows}
+            </div>`;
+          })();
 
           const shortDesc = desc.length > 100 ? desc.slice(0, 100) + '…' : desc;
           const targetStr = targets[0] || '(none)';
@@ -1715,14 +1893,18 @@
           const explorerLink = `${net().explorer}/address/${net().GOVERNOR}`;
 
           const deadlineHtml = (st === 0 || st === 1)
-            ? `<div class="prop-deadline"><span class="prop-deadline-icon">⏱</span> ${deadlineText(deadline)}</div>` : '';
+            ? `<div class="prop-deadline"><span class="prop-deadline-icon">⏱</span> ${st === 0 ? 'Voting period: ' + blocksToHuman(Number(deadline) - (snapshotBlockNum || 0)) + ' • ' : ''}${deadlineText(deadline)}</div>` : '';
 
           // Vote section
           let voteHtml = '';
           if (st === 1) {
             if (hasVoted) {
+              const voteClass = userVoteSupport !== null ? VOTE_BADGE_CLASSES[userVoteSupport] : '';
+              const voteText = userVoteSupport !== null
+                ? `${VOTE_ICONS[userVoteSupport]} You voted ${VOTE_LABELS[userVoteSupport]}`
+                : '✓ You have already voted';
               voteHtml = `<div class="vote-section">
-                <div class="current-vote-display">✓ You have already voted on this proposal</div>
+                <div class="current-vote-display ${voteClass}">${voteText}</div>
               </div>`;
             } else if (signerAddr) {
               const vpNote = votingPowerAtSnapshot !== null
@@ -1786,15 +1968,18 @@
               </div>
               <div class="prop-title" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
               ${deadlineHtml}
+              ${pendingBanner}
               ${voteProgressHTML(votes.forVotes, votes.againstVotes, votes.abstainVotes)}
               ${(st === 1 || st === 3 || st === 4 || st === 5 || st === 7) ? quorumBarHTML(votes.forVotes) : ''}
+              ${memberVotesHtml}
               ${voteHtml}
               ${actionsHtml}
               <div class="prop-details" id="details_${propIdStr}">
                 <div class="prop-detail-row"><div class="prop-detail-key">Full Description</div><div class="prop-detail-val readable">${desc}</div></div>
                 <div class="prop-detail-row"><div class="prop-detail-key">Target</div><div class="prop-detail-val">${targetStr}</div></div>
                 <div class="prop-detail-row"><div class="prop-detail-key">Calldata</div><div class="prop-detail-val">${calldataStr}</div></div>
-                <div class="prop-detail-row"><div class="prop-detail-key">Proposal ID</div><div class="prop-detail-val">${propIdStr}</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Proposal ID</div><div class="prop-detail-val">${propIdStr.slice(0,20)}…</div></div>
+                <div class="prop-detail-row"><div class="prop-detail-key">Snapshot Block</div><div class="prop-detail-val">${snapshotBlock ? snapshotBlock.toString() : '—'}</div></div>
                 <div class="prop-detail-row"><div class="prop-detail-key">Deadline Block</div><div class="prop-detail-val">${deadline.toString()}</div></div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px;">
@@ -1962,8 +2147,90 @@
       }, 8000);
     }
 
+    // ── Auto-refresh ─────────────────────────────────────────────────────────
+    function startAutoRefresh() {
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      if (refreshCountdownTimer) clearInterval(refreshCountdownTimer);
+
+      nextRefreshAt = Date.now() + AUTO_REFRESH_INTERVAL;
+
+      autoRefreshTimer = setInterval(async () => {
+        const dot = document.getElementById('refreshDot');
+        if (dot) { dot.classList.add('pulsing'); }
+        try {
+          currentBlock = Number(await provider.getBlockNumber());
+          document.getElementById('currentBlockDisplay').textContent = currentBlock.toLocaleString();
+          // Quietly refresh proposal states (no loading flash)
+          await silentRefreshProposalStates();
+        } catch(e) {}
+        if (dot) { dot.classList.remove('pulsing'); }
+        nextRefreshAt = Date.now() + AUTO_REFRESH_INTERVAL;
+      }, AUTO_REFRESH_INTERVAL);
+
+      // Countdown display
+      refreshCountdownTimer = setInterval(() => {
+        const secsLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));
+        const el = document.getElementById('refreshCountdown');
+        if (el) el.textContent = secsLeft > 0 ? `${secsLeft}s` : '';
+      }, 1000);
+    }
+
+    // Silent refresh: just update deadlines and states on existing cards
+    async function silentRefreshProposalStates() {
+      try {
+        const cards = document.querySelectorAll('.proposal-card[data-propid]');
+        const updates = [];
+        cards.forEach(card => {
+          const propIdStr = card.dataset.propid;
+          const p = proposalStore[propIdStr];
+          if (!p) return;
+          updates.push((async () => {
+            try {
+              const [stateNum, votes, deadline] = await Promise.all([
+                govContract.state(p.propId),
+                govContract.proposalVotes(p.propId),
+                govContract.proposalDeadline(p.propId),
+              ]);
+              const st = Number(stateNum);
+              // If state changed, do a full reload
+              if (card.dataset.state !== String(st)) {
+                return 'reload';
+              }
+              // Update deadline text
+              const deadlineEl = card.querySelector('.prop-deadline');
+              if (deadlineEl && (st === 0 || st === 1)) {
+                deadlineEl.innerHTML = `<span class="prop-deadline-icon">⏱</span> ${deadlineText(deadline)}`;
+              }
+            } catch(e) {}
+          })());
+        });
+        const results = await Promise.all(updates);
+        if (results.includes('reload')) {
+          await loadProposals();
+        }
+      } catch(e) {}
+    }
+
+    // ── Clawback countdown helper ────────────────────────────────────────────
+    function clawbackCountdown(deadlineStr) {
+      // Parse "Apr 25" as April 25, current year
+      const match = deadlineStr.match(/(\w+)\s+(\d+)/);
+      if (!match) return '';
+      const months = { Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11 };
+      const mo = months[match[1]];
+      if (mo === undefined) return '';
+      const day = parseInt(match[2]);
+      const now = new Date();
+      let year = now.getFullYear();
+      const target = new Date(year, mo, day);
+      if (target < now) return 'expired';
+      const msLeft = target - now;
+      const daysLeft = Math.ceil(msLeft / 86400000);
+      return `${daysLeft}d left`;
+    }
+
     // ── Boot ────────────────────────────────────────────────────────────────
-    init();
+    init().then(() => startAutoRefresh());
   </script>
 </body>
 </html>
