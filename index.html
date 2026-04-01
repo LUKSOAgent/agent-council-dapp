@@ -1901,7 +1901,9 @@
         document.getElementById('currentBlockDisplay').textContent = currentBlock.toLocaleString();
 
         const filter = govContract.filters.ProposalCreated();
-        const events = await govContract.queryFilter(filter, 0, 'latest');
+        // Use a recent start block to avoid RPC range limits (LUKSO caps eth_getLogs range)
+        const startBlock = currentNetwork === 'mainnet' ? 7200000 : 0;
+        const events = await govContract.queryFilter(filter, startBlock, 'latest');
 
         if (!events.length) {
           div.innerHTML = `<div class="empty-state">
@@ -1934,7 +1936,7 @@
               if (hasVoted) {
                 try {
                   const voteFilter = govContract.filters.VoteCast(signerAddr, propId);
-                  const voteEvents = await govContract.queryFilter(voteFilter, 0, 'latest');
+                  const voteEvents = await govContract.queryFilter(voteFilter, startBlock, 'latest');
                   if (voteEvents.length > 0) userVoteSupport = Number(voteEvents[0].args.support);
                 } catch(e2) {}
               }
@@ -1955,7 +1957,7 @@
           let memberVotesMap = {};
           try {
             const vcFilter = govContract.filters.VoteCast(null, propId);
-            const vcEvents = await govContract.queryFilter(vcFilter, 0, 'latest');
+            const vcEvents = await govContract.queryFilter(vcFilter, startBlock, 'latest');
             vcEvents.forEach(ev => {
               memberVotesMap[ev.args.voter.toLowerCase()] = Number(ev.args.support);
             });
