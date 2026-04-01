@@ -206,27 +206,18 @@ export function ProposalCard({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
-            <div
-              className="bg-green-400 transition-all duration-500"
-              style={{ width: `${forPct}%` }}
-            />
-            <div
-              className="bg-red-400 transition-all duration-500"
-              style={{ width: `${againstPct}%` }}
-            />
-            <div
-              className="bg-yellow-400 transition-all duration-500"
-              style={{ width: `${abstainPct}%` }}
-            />
+        <div style={{ marginTop: '8px' }}>
+          <div style={{ display: 'flex', height: '6px', borderRadius: '9999px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+            <div style={{ width: `${forPct}%`, background: '#4ade80', transition: 'width 0.5s' }} />
+            <div style={{ width: `${againstPct}%`, background: '#f87171', transition: 'width 0.5s' }} />
+            <div style={{ width: `${abstainPct}%`, background: '#facc15', transition: 'width 0.5s' }} />
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
-            <span className="text-green-400/80">✓ {forPct.toFixed(1)}%</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginTop: '4px', color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ color: '#4ade80' }}>✓ {forPct.toFixed(1)}%</span>
             {(isActive || state === 0) && countdown && (
-              <span className="text-yellow-400/80">{state === 0 ? `Starts: ${countdown}` : countdown}</span>
+              <span style={{ color: '#facc15' }}>{state === 0 ? `Starts: ${countdown}` : countdown}</span>
             )}
-            <span className="text-red-400/80">✗ {againstPct.toFixed(1)}%</span>
+            <span style={{ color: '#f87171' }}>✗ {againstPct.toFixed(1)}%</span>
           </div>
         </div>
       </div>

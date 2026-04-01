@@ -146,18 +146,18 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #060010 0%, #0a0020 50%, #060010 100%)' }}>
       {/* Header */}
-      <header className="border-b border-white/5 sticky top-0 z-50 backdrop-blur-xl bg-black/40">
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/40 to-blue-500/40 flex items-center justify-center text-sm border border-white/10">
+      <header style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(20px)', background: 'rgba(0,0,0,0.5)' }}>
+        <div style={{ width: '100%', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, rgba(139,92,246,0.4), rgba(59,130,246,0.4))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', border: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
               ⚖
             </div>
             <div>
-              <h1 className="text-sm font-semibold text-white leading-none">Agent Council</h1>
-              <p className="text-xs text-gray-400">DAO Governance</p>
+              <h1 style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.95)', lineHeight: 1 }}>Agent Council</h1>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>DAO Governance</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <NetworkSwitcher />
             <WalletConnect />
           </div>
