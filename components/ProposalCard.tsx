@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useReadContract, usePublicClient } from 'wagmi';
+import { useAccount, useReadContract, usePublicClient } from 'wagmi';
 import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
 import { formatVoteAmount, shortenAddress, splitProposalDescription } from '@/lib/format';
@@ -72,6 +72,7 @@ export function ProposalCard({
   isHighlighted,
 }: ProposalCardProps) {
   const { governorAddress, isMainnet } = useNetwork();
+  const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
   const [expanded, setExpanded] = useState(isHighlighted || false);
   const [votes, setVotes] = useState<VoteLog[]>([]);
@@ -105,6 +106,14 @@ export function ProposalCard({
     abi: GOVERNOR_ABI,
     functionName: 'proposalVotes',
     args: [proposalId],
+  });
+
+  const { data: hasVoted, isLoading: isCheckingHasVoted } = useReadContract({
+    address: governorAddress,
+    abi: GOVERNOR_ABI,
+    functionName: 'hasVoted',
+    args: address ? [proposalId, address] : undefined,
+    query: { enabled: !!address },
   });
 
   useEffect(() => {
@@ -203,6 +212,14 @@ export function ProposalCard({
               <span className="detail-label">Proposer</span>
               <p className="detail-value">{shortenAddress(proposer)}</p>
             </div>
+            {isActive && isConnected && (
+              <div>
+                <span className="detail-label">Wallet status</span>
+                <p className="detail-value">
+                  {isCheckingHasVoted ? 'Checking vote...' : hasVoted ? 'Already voted' : 'Vote available'}
+                </p>
+              </div>
+            )}
             <div>
               <span className="detail-label">Window</span>
               <p className="detail-value">
@@ -219,7 +236,7 @@ export function ProposalCard({
         <div className="space-y-3">
           <div className="vote-strip">
             <div
-              className="bg-[var(--accent)] transition-all duration-500"
+              className="bg-[#22c55e] transition-all duration-500"
               style={{ width: `${forPct}%` }}
             />
             <div
@@ -235,7 +252,7 @@ export function ProposalCard({
           <div className="summary-grid">
             <div className="summary-tile">
               <span className="summary-label">For</span>
-              <strong className="summary-value text-[var(--accent)]">{forPct.toFixed(1)}%</strong>
+              <strong className="summary-value text-[#22c55e]">{forPct.toFixed(1)}%</strong>
               <span className="summary-subtle">{formatVoteAmount(forVotes)} votes</span>
             </div>
             <div className="summary-tile">
@@ -268,7 +285,7 @@ export function ProposalCard({
 
               <div className="vote-table">
                 {[
-                  { label: 'For', value: forVotes, pct: forPct, color: 'bg-[var(--accent)]', text: 'text-[var(--accent)]' },
+                  { label: 'For', value: forVotes, pct: forPct, color: 'bg-[#22c55e]', text: 'text-[#22c55e]' },
                   { label: 'Against', value: againstVotes, pct: againstPct, color: 'bg-[var(--danger)]', text: 'text-[var(--danger)]' },
                   { label: 'Abstain', value: abstainVotes, pct: abstainPct, color: 'bg-[var(--warning)]', text: 'text-[var(--warning)]' },
                 ].map(({ label, value, pct, color, text }) => (
@@ -289,13 +306,13 @@ export function ProposalCard({
               <div className="quorum-panel">
                 <div className="flex items-center justify-between gap-3">
                   <span className="detail-label">Quorum progress</span>
-                  <span className={`text-sm font-medium ${quorumPct >= 100 ? 'text-[var(--accent)]' : 'text-white'}`}>
+                  <span className={`text-sm font-medium ${quorumPct >= 100 ? 'text-[#22c55e]' : 'text-white'}`}>
                     {quorumPct.toFixed(0)}%
                   </span>
                 </div>
                 <div className="vote-row-track">
                   <div
-                    className={`vote-row-fill ${quorumPct >= 100 ? 'bg-[var(--accent)]' : 'bg-white'}`}
+                    className={`vote-row-fill ${quorumPct >= 100 ? 'bg-[#22c55e]' : 'bg-white'}`}
                     style={{ width: `${Math.min(quorumPct, 100)}%` }}
                   />
                 </div>
