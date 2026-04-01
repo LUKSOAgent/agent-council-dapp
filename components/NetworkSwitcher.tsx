@@ -10,14 +10,14 @@ export function NetworkSwitcher() {
   const isMainnet = chainId === luksoMainnet.id;
 
   return (
-    <div className="flex items-center gap-1 glass-card px-2 py-1">
+    <div className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-black/20 p-1">
       <button
         onClick={() => switchChain({ chainId: luksoMainnet.id })}
         disabled={isPending || isMainnet}
-        className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+        className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] transition-all ${
           isMainnet
-            ? 'bg-white/10 text-white'
-            : 'text-gray-500 hover:text-gray-300'
+            ? 'bg-white text-black'
+            : 'text-[var(--text-soft)] hover:text-white'
         }`}
       >
         Mainnet
@@ -25,10 +25,10 @@ export function NetworkSwitcher() {
       <button
         onClick={() => switchChain({ chainId: luksoTestnet.id })}
         disabled={isPending || !isMainnet}
-        className={`px-3 py-1 text-xs font-medium rounded-lg transition-all ${
+        className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-[0.16em] transition-all ${
           !isMainnet
-            ? 'bg-white/10 text-white'
-            : 'text-gray-500 hover:text-gray-300'
+            ? 'bg-white text-black'
+            : 'text-[var(--text-soft)] hover:text-white'
         }`}
       >
         Testnet

@@ -48,11 +48,11 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
 
   if (isSuccess) {
     return (
-      <div className="glass-card rounded-2xl p-5 text-center">
-        <p className="text-green-400 font-medium">✓ Proposal created!</p>
+      <div className="surface-panel compact-panel text-center">
+        <p className="text-sm font-semibold text-[var(--accent)]">Proposal created.</p>
         <button
           onClick={() => { setOpen(false); setDescription(''); onCreated?.(); }}
-          className="mt-2 text-xs text-gray-500 hover:text-gray-300 transition-colors"
+          className="mt-3 text-sm text-[var(--text-soft)] transition-colors hover:text-white"
         >
           Create another
         </button>
@@ -61,46 +61,53 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
   }
 
   if (!open) {
-    return (
+      return (
       <button
         onClick={() => setOpen(true)}
-        className="glass-button w-full py-3 text-sm font-medium text-gray-400 hover:text-white border-dashed transition-all"
+        className="surface-panel compact-panel w-full border border-dashed border-white/15 bg-white/4 py-4 text-left transition-all hover:border-[var(--accent)]/40 hover:bg-white/6"
       >
-        + Create Proposal
+        <span className="section-kicker">Authoring</span>
+        <span className="mt-2 block text-lg font-semibold text-white">Create proposal</span>
+        <span className="mt-1 block text-sm text-[var(--text-muted)]">
+          Open a new governance action with markdown context and optional target override.
+        </span>
       </button>
     );
   }
 
   return (
-    <div className="glass-card rounded-2xl p-5 space-y-4">
+    <div className="surface-panel compact-panel space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-white">New Proposal</h3>
+        <div>
+          <span className="section-kicker">Authoring</span>
+          <h3 className="mt-2 text-xl font-semibold text-white">New proposal</h3>
+        </div>
         <button
           onClick={() => setOpen(false)}
-          className="text-gray-600 hover:text-gray-400 transition-colors"
+          className="text-[var(--text-soft)] transition-colors hover:text-white"
         >
           ✕
         </button>
       </div>
 
       {!isConnected ? (
-        <p className="text-sm text-gray-500">Connect wallet to create proposals</p>
+        <p className="text-sm text-[var(--text-muted)]">Connect a wallet to create proposals.</p>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">Description *</label>
+            <label className="mb-2 block text-xs uppercase tracking-[0.22em] text-white/40">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="## Proposal Title&#10;&#10;Describe what this proposal does..."
               rows={5}
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20 resize-none font-mono"
+              className="field-input min-h-36 resize-y font-mono"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 mb-1 block">
-              Target address <span className="text-gray-600">(optional — defaults to governor)</span>
+            <label className="mb-2 block text-xs uppercase tracking-[0.22em] text-white/40">
+              Target address <span className="normal-case tracking-normal text-[var(--text-soft)]">(optional, defaults to governor)</span>
             </label>
             <input
               type="text"
@@ -110,22 +117,22 @@ export function CreateProposalForm({ onCreated }: { onCreated?: () => void }) {
                 if (validationError) setValidationError('');
               }}
               placeholder="0x..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-white/20 font-mono"
+              className="field-input font-mono"
             />
           </div>
 
           {validationError && (
-            <p className="text-xs text-red-400">{validationError}</p>
+            <p className="text-xs text-red-300">{validationError}</p>
           )}
 
           {error && (
-            <p className="text-xs text-red-400">{error.message.split('(')[0].trim()}</p>
+            <p className="text-xs text-red-300">{error.message.split('(')[0].trim()}</p>
           )}
 
           <button
             type="submit"
             disabled={isPending || isConfirming || !description.trim() || !!(targetAddress.trim() && !isAddress(targetAddress.trim()))}
-            className="glass-button w-full py-2.5 text-sm font-medium text-white hover:bg-white/10 transition-all disabled:opacity-50"
+            className="action-button w-full justify-center disabled:opacity-50"
           >
             {isPending ? 'Submitting...' : isConfirming ? 'Confirming...' : 'Submit Proposal'}
           </button>

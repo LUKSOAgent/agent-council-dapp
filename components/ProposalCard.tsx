@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useReadContract, usePublicClient } from 'wagmi';
-import { formatEther } from 'viem';
 import { COUNCIL_MEMBERS, GOVERNOR_ABI, MAINNET_START_BLOCK, PROPOSAL_STATES, PROPOSAL_STATE_COLORS } from '@/lib/contracts';
 import { useNetwork } from '@/hooks/useNetwork';
+import { formatVoteAmount, shortenAddress, splitProposalDescription } from '@/lib/format';
 import { VoteButtons } from './VoteButtons';
 
 interface ProposalCardProps {
@@ -166,165 +166,202 @@ export function ProposalCard({
   const isActive = state === 1;
   const countdown = useCountdown(voteEnd, currentBlock);
 
-  const lines = description.split('\n');
-  const title = lines[0].replace(/^#+\s*/, '').trim() || `Proposal ${proposalId.toString().slice(-6)}`;
-  const body = lines.slice(1).join('\n').trim();
-
-  const shortProposer = `${proposer.slice(0, 6)}...${proposer.slice(-4)}`;
-  const formatVoter = (voter: string) => COUNCIL_MEMBERS[voter.toLowerCase()] || `${voter.slice(0, 8)}...${voter.slice(-4)}`;
+  const { title, summary } = splitProposalDescription(description, proposalId);
+  const formatVoter = (voter: string) => COUNCIL_MEMBERS[voter.toLowerCase()] || shortenAddress(voter, 8, 4);
+  const proposalUrl = typeof window === 'undefined'
+    ? ''
+    : `${window.location.origin}${window.location.pathname}?proposal=${proposalId.toString()}`;
 
   return (
     <div
       id={`proposal-${proposalId}`}
-      className={`glass-card rounded-2xl overflow-hidden transition-all duration-300 ${
-        isHighlighted ? 'ring-1 ring-white/20' : ''
+      className={`proposal-card transition-all duration-300 ${
+        isHighlighted ? 'ring-1 ring-[var(--accent)] shadow-[0_0_0_1px_rgba(111,255,233,0.3),0_25px_70px_rgba(0,0,0,0.45)]' : ''
       }`}
     >
       <div
-        className="p-5 cursor-pointer select-none"
+        className="cursor-pointer select-none p-6"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-white text-base leading-snug truncate">
+        <div className="mb-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <span className={`state-pill ${stateColor}`}>{stateName}</span>
+              {isActive && countdown && <span className="countdown-pill">{countdown}</span>}
+              <span className="meta-pill">#{proposalId.toString().slice(-6)}</span>
+            </div>
+            <h3 className="text-xl font-semibold leading-tight text-white sm:text-2xl">
               {title}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              by {shortProposer}
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--text-muted)]">
+              {summary || 'No supporting description provided.'}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-lg border ${stateColor}`}>
-              {stateName}
-            </span>
-            <span className="text-gray-600 text-sm">{expanded ? '▲' : '▼'}</span>
+
+          <div className="grid min-w-[220px] gap-3 rounded-[24px] border border-white/10 bg-black/20 p-4">
+            <div>
+              <span className="detail-label">Proposer</span>
+              <p className="detail-value">{shortenAddress(proposer)}</p>
+            </div>
+            <div>
+              <span className="detail-label">Window</span>
+              <p className="detail-value">
+                {voteStart.toString()} to {voteEnd.toString()}
+              </p>
+            </div>
+            <div className="flex items-center justify-between text-xs text-[var(--text-soft)]">
+              <span>{expanded ? 'Collapse details' : 'Expand details'}</span>
+              <span>{expanded ? '▲' : '▼'}</span>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex h-1.5 rounded-full overflow-hidden bg-white/5">
+        <div className="space-y-3">
+          <div className="vote-strip">
             <div
-              className="bg-green-400 transition-all duration-500"
+              className="bg-[var(--accent)] transition-all duration-500"
               style={{ width: `${forPct}%` }}
             />
             <div
-              className="bg-red-400 transition-all duration-500"
+              className="bg-[var(--danger)] transition-all duration-500"
               style={{ width: `${againstPct}%` }}
             />
             <div
-              className="bg-yellow-400 transition-all duration-500"
+              className="bg-[var(--warning)] transition-all duration-500"
               style={{ width: `${abstainPct}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-gray-500">
-            <span className="text-green-400/80">✓ {forPct.toFixed(1)}%</span>
-            {isActive && countdown && (
-              <span className="text-yellow-400/80">{countdown}</span>
-            )}
-            <span className="text-red-400/80">✗ {againstPct.toFixed(1)}%</span>
+
+          <div className="summary-grid">
+            <div className="summary-tile">
+              <span className="summary-label">For</span>
+              <strong className="summary-value text-[var(--accent)]">{forPct.toFixed(1)}%</strong>
+              <span className="summary-subtle">{formatVoteAmount(forVotes)} votes</span>
+            </div>
+            <div className="summary-tile">
+              <span className="summary-label">Against</span>
+              <strong className="summary-value text-[var(--danger)]">{againstPct.toFixed(1)}%</strong>
+              <span className="summary-subtle">{formatVoteAmount(againstVotes)} votes</span>
+            </div>
+            <div className="summary-tile">
+              <span className="summary-label">Abstain</span>
+              <strong className="summary-value text-[var(--warning)]">{abstainPct.toFixed(1)}%</strong>
+              <span className="summary-subtle">{formatVoteAmount(abstainVotes)} votes</span>
+            </div>
+            <div className="summary-tile">
+              <span className="summary-label">Quorum</span>
+              <strong className="summary-value text-white">{quorumPct.toFixed(0)}%</strong>
+              <span className="summary-subtle">{quorumPct >= 100 ? 'Reached' : 'In progress'}</span>
+            </div>
           </div>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-white/5 p-5 space-y-5">
-          {body && (
-            <div className="prose-sm">
-              <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap break-words">
-                {body}
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Votes</h4>
-            {[
-              { label: 'For', value: forVotes, pct: forPct, color: 'bg-green-400', text: 'text-green-400' },
-              { label: 'Against', value: againstVotes, pct: againstPct, color: 'bg-red-400', text: 'text-red-400' },
-              { label: 'Abstain', value: abstainVotes, pct: abstainPct, color: 'bg-yellow-400', text: 'text-yellow-400' },
-            ].map(({ label, value, pct, color, text }) => (
-              <div key={label} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className={text}>{label}</span>
-                  <span className="text-gray-400">
-                    {parseFloat(formatEther(value)).toFixed(2)} ({pct.toFixed(1)}%)
-                  </span>
-                </div>
-                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full ${color} rounded-full transition-all duration-500`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
+        <div className="border-t border-white/10 p-6 pt-0">
+          <div className="detail-grid">
+            <section className="detail-panel">
+              <div className="detail-panel-header">
+                <h4 className="detail-panel-title">Vote table</h4>
+                <span className="detail-panel-copy">Current on-chain weight</span>
               </div>
-            ))}
-          </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-xs">
-              <span className="text-gray-500">Quorum progress</span>
-              <span className={quorumPct >= 100 ? 'text-green-400' : 'text-gray-400'}>
-                {quorumPct.toFixed(0)}% of required
-              </span>
-            </div>
-            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${
-                  quorumPct >= 100 ? 'bg-green-400' : 'bg-blue-400'
-                }`}
-                style={{ width: `${Math.min(100, quorumPct)}%` }}
-              />
-            </div>
-          </div>
-
-          {votes.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Voter Breakdown ({votes.length})
-              </h4>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {votes.map((v, i) => (
-                  <div key={i} className="flex items-start gap-2 text-xs">
-                    <span className={`shrink-0 font-medium ${SUPPORT_COLORS[v.support] || 'text-gray-400'}`}>
-                      {SUPPORT_LABELS[v.support] || '?'}
-                    </span>
-                    <span className="text-gray-500 font-mono">
-                      {formatVoter(v.voter)}
-                    </span>
-                    <span className="text-gray-600 ml-auto shrink-0">
-                      {parseFloat(formatEther(v.weight)).toFixed(1)}
-                    </span>
-                    {v.reason && (
-                      <span className="text-gray-600 italic truncate max-w-[120px]">&ldquo;{v.reason}&rdquo;</span>
-                    )}
+              <div className="vote-table">
+                {[
+                  { label: 'For', value: forVotes, pct: forPct, color: 'bg-[var(--accent)]', text: 'text-[var(--accent)]' },
+                  { label: 'Against', value: againstVotes, pct: againstPct, color: 'bg-[var(--danger)]', text: 'text-[var(--danger)]' },
+                  { label: 'Abstain', value: abstainVotes, pct: abstainPct, color: 'bg-[var(--warning)]', text: 'text-[var(--warning)]' },
+                ].map(({ label, value, pct, color, text }) => (
+                  <div key={label} className="vote-row">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className={`text-sm font-medium ${text}`}>{label}</span>
+                      <span className="text-sm text-[var(--text-soft)]">
+                        {formatVoteAmount(value)} votes, {pct.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="vote-row-track">
+                      <div className={`vote-row-fill ${color}`} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+
+              <div className="quorum-panel">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="detail-label">Quorum progress</span>
+                  <span className={`text-sm font-medium ${quorumPct >= 100 ? 'text-[var(--accent)]' : 'text-white'}`}>
+                    {quorumPct.toFixed(0)}%
+                  </span>
+                </div>
+                <div className="vote-row-track">
+                  <div
+                    className={`vote-row-fill ${quorumPct >= 100 ? 'bg-[var(--accent)]' : 'bg-white'}`}
+                    style={{ width: `${Math.min(quorumPct, 100)}%` }}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="detail-panel">
+              <div className="detail-panel-header">
+                <h4 className="detail-panel-title">Council breakdown</h4>
+                <span className="detail-panel-copy">{votes.length} recorded vote{votes.length !== 1 ? 's' : ''}</span>
+              </div>
+
+              {votes.length > 0 ? (
+                <div className="breakdown-list">
+                  {votes.map((vote, index) => (
+                    <div key={`${vote.voter}-${index}`} className="breakdown-row">
+                      <div>
+                        <p className="text-sm font-medium text-white">{formatVoter(vote.voter)}</p>
+                        <p className={`mt-1 text-xs ${SUPPORT_COLORS[vote.support] || 'text-[var(--text-soft)]'}`}>
+                          {SUPPORT_LABELS[vote.support] || 'Unknown'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-white">{formatVoteAmount(vote.weight, 1)}</p>
+                        {vote.reason && (
+                          <p className="mt-1 max-w-[16rem] text-xs italic leading-5 text-[var(--text-soft)]">
+                            &ldquo;{vote.reason}&rdquo;
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-mini-panel">
+                  No cast votes recorded yet.
+                </div>
+              )}
+            </section>
+          </div>
 
           {isActive && (
-            <div className="border-t border-white/5 pt-4">
+            <div className="mt-6">
               <VoteButtons proposalId={proposalId} onVoted={refetchVotes} />
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 border-t border-white/5 pt-3">
-            <div>Block start: {voteStart.toString()}</div>
-            <div>Block end: {voteEnd.toString()}</div>
-            <div className="col-span-2">
-              ID: {proposalId.toString().slice(0, 12)}...
-              <button
-                onClick={() => {
-                  const url = new URL(window.location.href);
-                  url.searchParams.set('proposal', proposalId.toString());
-                  navigator.clipboard.writeText(url.toString()).catch(() => {});
-                }}
-                className="ml-2 text-blue-400/60 hover:text-blue-400 transition-colors"
-              >
-                Share link
-              </button>
+          <div className="meta-bar">
+            <div>
+              <span className="detail-label">Proposal ID</span>
+              <p className="detail-value">{proposalId.toString()}</p>
             </div>
+            <div>
+              <span className="detail-label">Vote start</span>
+              <p className="detail-value">{voteStart.toString()}</p>
+            </div>
+            <div>
+              <span className="detail-label">Vote end</span>
+              <p className="detail-value">{voteEnd.toString()}</p>
+            </div>
+            <button
+              onClick={() => navigator.clipboard.writeText(proposalUrl).catch(() => {})}
+              className="control-button justify-self-start lg:justify-self-end"
+            >
+              Copy link
+            </button>
           </div>
         </div>
       )}

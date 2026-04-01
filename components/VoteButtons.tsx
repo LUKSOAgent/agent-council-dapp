@@ -68,8 +68,8 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
 
   if (!isConnected) {
     return (
-      <p className="text-xs text-gray-500 text-center py-2">
-        Connect wallet to vote
+      <p className="rounded-[22px] border border-white/10 bg-black/20 px-4 py-4 text-center text-sm text-[var(--text-muted)]">
+        Connect wallet to vote.
       </p>
     );
   }
@@ -77,7 +77,7 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
   if (isSuccess || hasVoted) {
     return (
       <div className="text-center py-2">
-        <span className="text-sm text-green-400">✓ Vote recorded</span>
+        <span className="text-sm text-[var(--accent)]">Vote recorded.</span>
       </div>
     );
   }
@@ -85,14 +85,21 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
   if (isConfirming) {
     return (
       <div className="text-center py-2">
-        <span className="text-sm text-yellow-400 animate-pulse">Confirming transaction...</span>
+        <span className="text-sm animate-pulse text-[var(--warning)]">Confirming transaction...</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
+    <div className="vote-action-panel">
+      <div className="vote-action-header">
+        <div>
+          <span className="section-kicker">Cast vote</span>
+          <h4 className="mt-2 text-lg font-semibold text-white">Choose support and submit a reason if needed.</h4>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
         {[1, 0, 2].map((support) => (
           <button
             key={support}
@@ -101,7 +108,7 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
               setShowReason(true);
             }}
             disabled={isWriting}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl border text-sm font-medium transition-all disabled:opacity-50 ${
+            className={`flex items-center justify-center gap-2 rounded-[20px] border px-4 py-4 text-sm font-medium transition-all disabled:opacity-50 ${
               selected === support ? VOTE_ACTIVE_COLORS[support] : VOTE_COLORS[support]
             }`}
           >
@@ -112,25 +119,25 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
       </div>
 
       {showReason && selected !== null && (
-        <div className="space-y-2 animate-in slide-in-from-top-2">
+        <div className="animate-in slide-in-from-top-2 space-y-3">
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="Add a reason (optional)"
             rows={2}
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white/20 resize-none"
+            className="field-input resize-none"
           />
           <div className="flex gap-2">
             <button
               onClick={handleSubmitWithReason}
               disabled={isWriting}
-              className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition-all disabled:opacity-50 ${VOTE_ACTIVE_COLORS[selected]}`}
+              className={`flex-1 rounded-[18px] border px-4 py-3 text-sm font-medium transition-all disabled:opacity-50 ${VOTE_ACTIVE_COLORS[selected]}`}
             >
               {isWriting ? 'Submitting...' : `Vote ${VOTE_LABELS[selected]}`}
             </button>
             <button
               onClick={() => { setShowReason(false); setSelected(null); }}
-              className="px-3 py-2 rounded-xl text-sm text-gray-500 hover:text-gray-300 transition-colors"
+              className="rounded-[18px] px-4 py-3 text-sm text-[var(--text-soft)] transition-colors hover:text-white"
             >
               Cancel
             </button>
@@ -139,7 +146,7 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
       )}
 
       {error && (
-        <p className="text-xs text-red-400 text-center">
+        <p className="text-center text-xs text-red-300">
           {error.message.split('(')[0].trim()}
         </p>
       )}

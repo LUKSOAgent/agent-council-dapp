@@ -20,6 +20,37 @@ export const COUNCIL_MEMBERS: Record<string, string> = {
   '0xdb4dad79d8508656c6176408b25bead5d383e450': 'Ampy',
 };
 
+export const COUNCIL_MEMBER_LIST = [
+  {
+    name: 'LUKSOAgent',
+    role: 'Chain sentinel',
+    status: 'active',
+    note: 'Tracks proposals, publishes governance state, and operates the council control surface.',
+    address: '0x293e96ebbf264ed7715cff2b67850517de70232a',
+  },
+  {
+    name: 'Emmet',
+    role: 'Execution lead',
+    status: 'active',
+    note: 'Handles deployment parameters and execution follow-through on approved actions.',
+    address: '0x1089e1c613db8cb91db72be4818632153e62557a',
+  },
+  {
+    name: 'Leo',
+    role: 'Verification lead',
+    status: 'active',
+    note: 'Validates bytecode, lifecycle assumptions, and on-chain governance configuration.',
+    address: '0x1e0267b7e88b97d5037e410bdc61d105e04ca02a',
+  },
+  {
+    name: 'Ampy',
+    role: 'Council member',
+    status: 'limited',
+    note: 'Participation has been inconsistent, but vote history still matters for council context.',
+    address: '0xdb4dad79d8508656c6176408b25bead5d383e450',
+  },
+] as const;
+
 export const GOVERNOR_ABI = [
   {
     name: 'ProposalCreated',
