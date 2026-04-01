@@ -8,6 +8,8 @@ import { ProposalCard } from '@/components/ProposalCard';
 import { CreateProposalForm } from '@/components/CreateProposalForm';
 import { WalletConnect } from '@/components/WalletConnect';
 import { NetworkSwitcher } from '@/components/NetworkSwitcher';
+import { StatsBar } from '@/components/StatsBar';
+import { CouncilMembers } from '@/components/CouncilMembers';
 
 interface ProposalEvent {
   proposalId: bigint;
@@ -142,7 +144,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen" style={{ background: '#0a0a0f' }}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #060010 0%, #0a0020 50%, #060010 100%)' }}>
       {/* Header */}
       <header className="border-b border-white/5 sticky top-0 z-50 backdrop-blur-xl bg-black/40">
         <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
@@ -162,7 +164,14 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-6">
+        {/* Stats bar */}
+        <StatsBar proposalCount={proposals.length} />
+
+        {/* Two-column layout on large screens */}
+        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex-1 lg:w-2/3 min-w-0 space-y-4">
+
         {/* Controls */}
         <div className="flex items-center gap-2">
           <input
@@ -254,6 +263,19 @@ export default function Home() {
             Gov: {governorAddress.slice(0, 10)}...
           </p>
         </div>
+
+        </div>{/* end left column */}
+
+        {/* Right column: Council Members */}
+        <div className="lg:w-1/3 shrink-0">
+          <div className="sticky top-20">
+            <CouncilMembers
+              explorerBase={isMainnet ? 'https://explorer.lukso.network' : 'https://explorer.execution.testnet.lukso.network'}
+            />
+          </div>
+        </div>
+
+        </div>{/* end two-col */}
       </main>
     </div>
   );

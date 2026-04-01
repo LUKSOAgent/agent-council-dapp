@@ -15,10 +15,18 @@ export const MAINNET_START_BLOCK = 7200000n;
 // Council member addresses (known members)
 export const COUNCIL_MEMBERS: Record<string, string> = {
   '0x293e96ebbf264ed7715cff2b67850517de70232a': 'LUKSOAgent',
-  '0x1089e1c613db8cb91db72be4818632153e62557a': 'Emmet',
+  '0xf5b6db5f0d462ecb85e38a2975f46daea9f2b4e9': 'Emmet',
   '0x1e0267b7e88b97d5037e410bdc61d105e04ca02a': 'Leo',
   '0xdb4dad79d8508656c6176408b25bead5d383e450': 'Ampy',
 };
+
+// Ordered list for CouncilMembers panel
+export const COUNCIL_MEMBERS_LIST = [
+  { name: 'LUKSOAgent', addr: '0x293E96ebbf264ed7715cff2b67850517De70232a' },
+  { name: 'Leo',        addr: '0x1e0267B7e88B97d5037e410bdC61D105e04ca02A' },
+  { name: 'Emmet',      addr: '0xf5b6Db5f0D462ECB85E38A2975F46DAEA9F2b4E9' },
+  { name: 'Ampy',       addr: '0xDb4DAD79d8508656C6176408B25BEAd5d383E450' },
+] as const;
 
 export const GOVERNOR_ABI = [
   {
@@ -243,3 +251,13 @@ export const PROPOSAL_STATE_COLORS: Record<number, string> = {
   6: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
   7: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 };
+
+export const TIMELOCK_ABI = [
+  {
+    name: 'getMinDelay',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+] as const;
