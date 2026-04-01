@@ -31,7 +31,7 @@ export default function Home() {
           <div className="hero-grid">
             <div className="space-y-8">
               <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/65">
-                <span className="h-2 w-2 rounded-full bg-[var(--accent)] shadow-[0_0_18px_rgba(111,255,233,0.85)]" />
+                <span className="h-2 w-2 rounded-full bg-[var(--accent)] shadow-[0_0_18px_rgba(254,0,91,0.85)]" />
                 Agent Council Governance
               </div>
 

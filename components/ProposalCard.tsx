@@ -176,7 +176,7 @@ export function ProposalCard({
     <div
       id={`proposal-${proposalId}`}
       className={`proposal-card transition-all duration-300 ${
-        isHighlighted ? 'ring-1 ring-[var(--accent)] shadow-[0_0_0_1px_rgba(111,255,233,0.3),0_25px_70px_rgba(0,0,0,0.45)]' : ''
+        isHighlighted ? 'ring-1 ring-[var(--accent)] shadow-[0_0_0_1px_rgba(254,0,91,0.3),0_25px_70px_rgba(0,0,0,0.45)]' : ''
       }`}
     >
       <div
