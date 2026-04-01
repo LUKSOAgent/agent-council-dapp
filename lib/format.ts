@@ -15,8 +15,18 @@ export function formatCompactTime(date: Date) {
   });
 }
 
+export function sanitizeProposalText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function splitProposalDescription(description: string, fallbackId: bigint) {
-  const lines = description.split('\n');
+  const safeDescription = sanitizeProposalText(description);
+  const lines = safeDescription.split('\n');
   const title = lines[0].replace(/^#+\s*/, '').trim() || `Proposal ${fallbackId.toString().slice(-6)}`;
   const summary = lines.slice(1).join('\n').trim();
 

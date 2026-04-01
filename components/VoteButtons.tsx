@@ -30,7 +30,11 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
   const [reason, setReason] = useState('');
   const [showReason, setShowReason] = useState(false);
 
-  const { data: hasVoted } = useReadContract({
+  const {
+    data: hasVoted,
+    isLoading: isCheckingHasVoted,
+    isFetching: isRefreshingHasVoted,
+  } = useReadContract({
     address: governorAddress,
     abi: GOVERNOR_ABI,
     functionName: 'hasVoted',
@@ -50,6 +54,12 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
   useEffect(() => {
     if (isSuccess) onVoted?.();
   }, [isSuccess, onVoted]);
+
+  useEffect(() => {
+    setSelected(null);
+    setReason('');
+    setShowReason(false);
+  }, [proposalId, address]);
 
   const submitVote = (support: number, voteReason: string) => {
     writeContract({
@@ -74,10 +84,20 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
     );
   }
 
+  if (isCheckingHasVoted || isRefreshingHasVoted) {
+    return (
+      <div className="rounded-[22px] border border-white/10 bg-black/20 px-4 py-4 text-center">
+        <span className="text-sm text-[var(--text-muted)]">Checking wallet vote status...</span>
+      </div>
+    );
+  }
+
   if (isSuccess || hasVoted) {
     return (
-      <div className="text-center py-2">
-        <span className="text-sm text-[var(--accent)]">Vote recorded.</span>
+      <div className="rounded-[22px] border border-[var(--accent)]/30 bg-[var(--accent)]/10 px-4 py-4 text-center">
+        <span className="text-sm text-[var(--accent)]">
+          {isSuccess ? 'Vote recorded.' : 'This wallet already voted on this proposal.'}
+        </span>
       </div>
     );
   }
@@ -107,7 +127,7 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
               setSelected(support);
               setShowReason(true);
             }}
-            disabled={isWriting}
+            disabled={isWriting || isCheckingHasVoted || isRefreshingHasVoted || !!hasVoted}
             className={`flex items-center justify-center gap-2 rounded-[20px] border px-4 py-4 text-sm font-medium transition-all disabled:opacity-50 ${
               selected === support ? VOTE_ACTIVE_COLORS[support] : VOTE_COLORS[support]
             }`}
@@ -130,7 +150,7 @@ export function VoteButtons({ proposalId, onVoted }: VoteButtonsProps) {
           <div className="flex gap-2">
             <button
               onClick={handleSubmitWithReason}
-              disabled={isWriting}
+              disabled={isWriting || !!hasVoted}
               className={`flex-1 rounded-[18px] border px-4 py-3 text-sm font-medium transition-all disabled:opacity-50 ${VOTE_ACTIVE_COLORS[selected]}`}
             >
               {isWriting ? 'Submitting...' : `Vote ${VOTE_LABELS[selected]}`}
