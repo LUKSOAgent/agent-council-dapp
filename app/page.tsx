@@ -133,7 +133,7 @@ export default function Home() {
     <div className="min-h-screen" style={{ background: '#0a0a0f' }}>
       {/* Header */}
       <header className="border-b border-white/5 sticky top-0 z-50 backdrop-blur-xl bg-black/40">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500/40 to-blue-500/40 flex items-center justify-center text-sm border border-white/10">
               ⚖
@@ -150,7 +150,7 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+      <main className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-4">
         {/* Controls */}
         <div className="flex items-center gap-2">
           <input
@@ -219,7 +219,7 @@ export default function Home() {
           </div>
         )}
 
-        <div className="space-y-3">
+        <div className={filtered.length > 1 ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "space-y-3"}>
           {filtered.map((p) => (
             <ProposalCard
               key={p.proposalId.toString()}
