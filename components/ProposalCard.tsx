@@ -218,8 +218,8 @@ export function ProposalCard({
           </div>
           <div className="flex justify-between text-xs text-gray-500">
             <span className="text-green-400/80">✓ {forPct.toFixed(1)}%</span>
-            {isActive && countdown && (
-              <span className="text-yellow-400/80">{countdown}</span>
+            {(isActive || state === 0) && countdown && (
+              <span className="text-yellow-400/80">{state === 0 ? `Starts: ${countdown}` : countdown}</span>
             )}
             <span className="text-red-400/80">✗ {againstPct.toFixed(1)}%</span>
           </div>

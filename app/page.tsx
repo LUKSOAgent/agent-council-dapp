@@ -49,26 +49,38 @@ export default function Home() {
     setError(null);
     try {
       const fromBlock = isMainnet ? MAINNET_START_BLOCK : 0n;
-      const logs = await publicClient.getLogs({
-        address: governorAddress,
-        event: {
-          name: 'ProposalCreated',
-          type: 'event',
-          inputs: [
-            { name: 'proposalId', type: 'uint256', indexed: false },
-            { name: 'proposer', type: 'address', indexed: false },
-            { name: 'targets', type: 'address[]', indexed: false },
-            { name: 'values', type: 'uint256[]', indexed: false },
-            { name: 'signatures', type: 'string[]', indexed: false },
-            { name: 'calldatas', type: 'bytes[]', indexed: false },
-            { name: 'voteStart', type: 'uint256', indexed: false },
-            { name: 'voteEnd', type: 'uint256', indexed: false },
-            { name: 'description', type: 'string', indexed: false },
-          ],
-        },
-        fromBlock,
-        toBlock: 'latest',
-      });
+      const latestBlock = await publicClient.getBlockNumber();
+      const CHUNK_SIZE = 5000n;
+
+      // Chunk getLogs to avoid LUKSO RPC range limits
+      const proposalCreatedEvent = {
+        name: 'ProposalCreated',
+        type: 'event',
+        inputs: [
+          { name: 'proposalId', type: 'uint256', indexed: false },
+          { name: 'proposer', type: 'address', indexed: false },
+          { name: 'targets', type: 'address[]', indexed: false },
+          { name: 'values', type: 'uint256[]', indexed: false },
+          { name: 'signatures', type: 'string[]', indexed: false },
+          { name: 'calldatas', type: 'bytes[]', indexed: false },
+          { name: 'voteStart', type: 'uint256', indexed: false },
+          { name: 'voteEnd', type: 'uint256', indexed: false },
+          { name: 'description', type: 'string', indexed: false },
+        ],
+      } as const;
+
+      const allLogs = [];
+      for (let start = fromBlock; start <= latestBlock; start += CHUNK_SIZE) {
+        const end = start + CHUNK_SIZE - 1n > latestBlock ? latestBlock : start + CHUNK_SIZE - 1n;
+        const chunk = await publicClient.getLogs({
+          address: governorAddress,
+          event: proposalCreatedEvent,
+          fromBlock: start,
+          toBlock: end,
+        });
+        allLogs.push(...chunk);
+      }
+      const logs = allLogs;
 
       const parsed: ProposalEvent[] = logs.map((log) => {
         const a = log.args as {
@@ -140,7 +152,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-sm font-semibold text-white leading-none">Agent Council</h1>
-              <p className="text-xs text-gray-600">DAO Governance</p>
+              <p className="text-xs text-gray-400">DAO Governance</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -174,7 +186,7 @@ export default function Home() {
         </div>
 
         {lastRefresh && (
-          <p className="text-xs text-gray-600 text-right -mt-2">
+          <p className="text-xs text-gray-400 text-right -mt-2">
             Updated {lastRefresh.toLocaleTimeString()}
             {' · '}
             {filtered.length} proposal{filtered.length !== 1 ? 's' : ''}
