@@ -1094,6 +1094,76 @@
       color: var(--text-secondary);
     }
 
+    /* ── Search bar ── */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      color: var(--text);
+      padding: 10px 16px 10px 40px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: rgba(255, 41, 117, 0.4);
+      box-shadow: 0 0 0 3px rgba(255, 41, 117, 0.06);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-tertiary);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* ── Share button ── */
+    .btn-share {
+      background: transparent;
+      border: none;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.15s, background 0.15s;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .btn-share:hover { color: var(--text-secondary); background: rgba(255,255,255,0.06); }
+
+    /* ── Proposal ID short ── */
+    .prop-id-short {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    /* ── Live countdown timer ── */
+    .live-timer {
+      font-variant-numeric: tabular-nums;
+      color: var(--warning);
+      font-weight: 600;
+    }
+
+    /* ── Last refreshed ── */
+    .last-refreshed {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
     /* ── Current vote indicator ── */
     .current-vote-display {
       display: flex;
@@ -1299,7 +1369,8 @@
       <div class="stat-card">
         <div class="stat-label">Current Block</div>
         <div class="stat-value" id="currentBlockDisplay">—</div>
-        <div class="stat-sub" style="display:flex;align-items:center;gap:5px;">LUKSO chain <span class="refresh-indicator"><span class="refresh-dot" id="refreshDot"></span><span id="refreshCountdown"></span></span></div>
+        <div class="stat-sub" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">LUKSO chain <span class="refresh-indicator"><span class="refresh-dot" id="refreshDot"></span><span id="refreshCountdown"></span></span></div>
+        <div class="last-refreshed" id="lastRefreshed"></div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Your Power</div>
@@ -1347,6 +1418,12 @@
       <div class="section-header">
         <div class="section-title">Proposals</div>
         <button class="btn-glass btn-xs" onclick="loadProposals()">↻ Refresh</button>
+      </div>
+
+      <!-- Search bar -->
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="proposalSearch" placeholder="Search proposals..." oninput="searchProposals(this.value)" />
       </div>
 
       <!-- Filter bar -->
@@ -1657,6 +1734,82 @@
       return `Closes in ~${Math.round(secsLeft/86400)}d (${dateStr})`;
     }
 
+    // ── Live countdown timers ─────────────────────────────────────────────
+    const liveTimerMap = {}; // propIdStr -> deadline ms
+    let liveTimerInterval = null;
+
+    function registerLiveTimer(propIdStr, deadlineBlock) {
+      const blocksLeft = Number(deadlineBlock) - currentBlock;
+      if (blocksLeft <= 0) return;
+      liveTimerMap[propIdStr] = Date.now() + blocksLeft * BLOCKS_PER_SEC * 1000;
+    }
+
+    function startLiveTimers() {
+      if (liveTimerInterval) clearInterval(liveTimerInterval);
+      liveTimerInterval = setInterval(() => {
+        for (const [propIdStr, deadlineMs] of Object.entries(liveTimerMap)) {
+          const el = document.getElementById('timer_' + propIdStr);
+          if (!el) continue;
+          const msLeft = deadlineMs - Date.now();
+          if (msLeft <= 0) { el.textContent = ''; continue; }
+          const s = Math.floor(msLeft / 1000);
+          if (s < 60) { el.textContent = `· ${s}s`; continue; }
+          const m = Math.floor(s / 60), sec = s % 60;
+          if (m < 60) { el.textContent = `· ${m}m ${String(sec).padStart(2,'0')}s`; continue; }
+          const h = Math.floor(m / 60), min = m % 60;
+          if (h < 24) { el.textContent = `· ${h}h ${String(min).padStart(2,'0')}m`; continue; }
+          el.textContent = `· ${Math.floor(h/24)}d ${h%24}h`;
+        }
+      }, 1000);
+    }
+
+    // ── Proposal search ─────────────────────────────────────────────────
+    let searchQuery = '';
+
+    function searchProposals(q) {
+      searchQuery = q.toLowerCase().trim();
+      applyProposalVisibility();
+    }
+
+    function applyProposalVisibility() {
+      const allCards = document.querySelectorAll('.proposal-card[data-state]');
+      let visible = 0;
+      allCards.forEach(card => {
+        const matchesFilter = activeFilter === 'all' || card.dataset.state === activeFilter;
+        const descText = (card.dataset.desc || '').toLowerCase();
+        const propId = (card.dataset.propid || '').toLowerCase();
+        const matchesSearch = !searchQuery || descText.includes(searchQuery) || propId.includes(searchQuery);
+        const show = matchesFilter && matchesSearch;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      let emptyEl = document.getElementById('filterEmptyState');
+      if (visible === 0 && allCards.length > 0) {
+        if (!emptyEl) {
+          emptyEl = document.createElement('div');
+          emptyEl.id = 'filterEmptyState';
+          emptyEl.className = 'empty-state';
+          document.getElementById('proposalsList').appendChild(emptyEl);
+        }
+        emptyEl.innerHTML = searchQuery
+          ? `<div class="empty-state-icon">🔍</div>
+             <div class="empty-state-title">No results for "${searchQuery}"</div>
+             <div class="empty-state-desc">Try a different search term or clear the filter.</div>`
+          : `<div class="empty-state-icon">🔍</div>
+             <div class="empty-state-title">No proposals here</div>
+             <div class="empty-state-desc">No proposals match this filter. Try "All" to see everything.</div>`;
+        emptyEl.style.display = '';
+      } else if (emptyEl) {
+        emptyEl.style.display = 'none';
+      }
+    }
+
+    // ── Copy proposal link ──────────────────────────────────────────────
+    function copyProposalLink(propIdStr) {
+      const url = window.location.origin + window.location.pathname + '?proposal=' + propIdStr;
+      navigator.clipboard.writeText(url).then(() => showToast('Proposal link copied ✓')).catch(() => showToast('ID: ' + propIdStr.slice(0,20) + '…'));
+    }
+
     function quorumBarHTML(forVotes) {
       if (totalSupplyRaw === 0n) return '';
       const quorumRequired = totalSupplyRaw * quorumNumeratorVal / 100n;
@@ -1736,31 +1889,7 @@
           if (b.dataset.filter === filter) b.classList.add('active');
         });
       }
-
-      const allCards = document.querySelectorAll('.proposal-card[data-state]');
-      let visible = 0;
-      allCards.forEach(card => {
-        const show = filter === 'all' || card.dataset.state === filter;
-        card.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-
-      // Show empty state if nothing visible
-      let emptyEl = document.getElementById('filterEmptyState');
-      if (visible === 0 && allCards.length > 0) {
-        if (!emptyEl) {
-          emptyEl = document.createElement('div');
-          emptyEl.id = 'filterEmptyState';
-          emptyEl.className = 'empty-state';
-          emptyEl.innerHTML = `<div class="empty-state-icon">🔍</div>
-            <div class="empty-state-title">No proposals here</div>
-            <div class="empty-state-desc">No proposals match this filter. Try "All" to see everything.</div>`;
-          document.getElementById('proposalsList').appendChild(emptyEl);
-        }
-        emptyEl.style.display = '';
-      } else if (emptyEl) {
-        emptyEl.style.display = 'none';
-      }
+      applyProposalVisibility();
     }
 
     // ── Load proposals ──────────────────────────────────────────────────────
@@ -1887,13 +2016,19 @@
             </div>`;
           })();
 
-          const shortDesc = desc.length > 100 ? desc.slice(0, 100) + '…' : desc;
+          // Extract clean title from description
+          const firstLine = desc.split('\n')[0].trim();
+          const shortDesc = firstLine.length > 120 ? firstLine.slice(0, 120) + '…' : firstLine;
+          const descForData = desc.replace(/"/g, '').replace(/'/g, '').slice(0, 200);
           const targetStr = targets[0] || '(none)';
           const calldataStr = calldatas[0] || '0x';
           const explorerLink = `${net().explorer}/address/${net().GOVERNOR}`;
 
+          // Register live timer for active proposals
+          if (st === 1) registerLiveTimer(propIdStr, deadline);
+
           const deadlineHtml = (st === 0 || st === 1)
-            ? `<div class="prop-deadline"><span class="prop-deadline-icon">⏱</span> ${st === 0 ? 'Voting period: ' + blocksToHuman(Number(deadline) - (snapshotBlockNum || 0)) + ' • ' : ''}${deadlineText(deadline)}</div>` : '';
+            ? `<div class="prop-deadline"><span class="prop-deadline-icon">⏱</span> ${st === 0 ? 'Voting period: ' + blocksToHuman(Number(deadline) - (snapshotBlockNum || 0)) + ' • ' : ''}${deadlineText(deadline)}${st === 1 ? ` <span class="live-timer" id="timer_${propIdStr}"></span>` : ''}</div>` : '';
 
           // Vote section
           let voteHtml = '';
@@ -1958,13 +2093,17 @@
 
           return {
             state: st,
-            html: `<div class="proposal-card ${isActive ? 'active-proposal' : ''}" data-state="${st}" data-propid="${propIdStr}">
+            html: `<div class="proposal-card ${isActive ? 'active-proposal' : ''}" data-state="${st}" data-propid="${propIdStr}" data-desc="${descForData}">
               <div class="prop-header">
                 <div class="prop-header-left">
                   <span class="badge ${badgeClass}"><span class="badge-dot"></span>${label}</span>
                   ${hasVotedBadge}
+                  <span class="prop-id-short">#${propIdStr.slice(0,8)}…</span>
                 </div>
-                <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button class="btn-share" title="Copy proposal link" onclick="event.stopPropagation();copyProposalLink('${propIdStr}')">🔗</button>
+                  <a href="${explorerLink}" target="_blank" class="blockscout-link">BlockScout ↗</a>
+                </div>
               </div>
               <div class="prop-title" data-action="toggle" data-propid="${propIdStr}">${shortDesc}</div>
               ${deadlineHtml}
@@ -2002,8 +2141,30 @@
         // Update filter button counts
         updateFilterCounts(cards);
 
-        // Re-apply active filter
-        filterProposals(activeFilter, null);
+        // Re-apply active filter + search
+        applyProposalVisibility();
+
+        // Start live countdown timers
+        startLiveTimers();
+
+        // Update last-refreshed
+        const lrEl = document.getElementById('lastRefreshed');
+        if (lrEl) {
+          const now = new Date();
+          lrEl.textContent = 'Updated ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        }
+
+        // Deep-link: scroll to proposal if ?proposal=ID in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const linkedProp = urlParams.get('proposal');
+        if (linkedProp) {
+          const el = document.querySelector(`[data-propid="${linkedProp}"]`);
+          if (el) {
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+            el.style.borderColor = 'rgba(255,41,117,0.5)';
+            setTimeout(() => el.style.borderColor = '', 3000);
+          }
+        }
 
       } catch(e) {
         div.innerHTML = `<div class="error-text">Failed to load proposals: ${e.message}</div>`;
@@ -2162,6 +2323,12 @@
           document.getElementById('currentBlockDisplay').textContent = currentBlock.toLocaleString();
           // Quietly refresh proposal states (no loading flash)
           await silentRefreshProposalStates();
+          // Update last-refreshed
+          const lrEl = document.getElementById('lastRefreshed');
+          if (lrEl) {
+            const now = new Date();
+            lrEl.textContent = 'Updated ' + now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+          }
         } catch(e) {}
         if (dot) { dot.classList.remove('pulsing'); }
         nextRefreshAt = Date.now() + AUTO_REFRESH_INTERVAL;
@@ -2196,10 +2363,11 @@
               if (card.dataset.state !== String(st)) {
                 return 'reload';
               }
-              // Update deadline text
+              // Update deadline text (preserve live timer span)
               const deadlineEl = card.querySelector('.prop-deadline');
               if (deadlineEl && (st === 0 || st === 1)) {
-                deadlineEl.innerHTML = `<span class="prop-deadline-icon">⏱</span> ${deadlineText(deadline)}`;
+                const timerSpan = st === 1 ? `<span class="live-timer" id="timer_${propIdStr}"></span>` : '';
+                deadlineEl.innerHTML = `<span class="prop-deadline-icon">⏱</span> ${deadlineText(deadline)} ${timerSpan}`;
               }
             } catch(e) {}
           })());
